@@ -1,5 +1,5 @@
 import { join } from "@tauri-apps/api/path";
-import { convertFileSrc } from "@tauri-apps/api/tauri";
+import { convertFileSrc } from "@tauri-apps/api/core";
 async function getImgUrl(filePath: string, imgPath: string) {
   const dir = await join(filePath, "../", imgPath);
   return convertFileSrc(dir);

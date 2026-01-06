@@ -8,7 +8,7 @@
 
 Navigate to the [release page](https://github.com/tk04/Marker/releases) and select the installer that matches your platform.
 
-#### Using Hombrew
+#### Using Homebrew
 ```bash
 $ brew install --cask tk04/tap/marker
 ```
@@ -29,8 +29,11 @@ $ yay -S marker-md
 To build Marker locally, clone this repo and run the following commands (make sure to have Rust already installed on your system):
 
 ```sh
-$ pnpm install && npx tauri build
+$ pnpm install && pnpm tauri build
 ```
+
+### Development
+The dev server runs on port `6275` to avoid common conflicts.
 
 ## Contributing
 

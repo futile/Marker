@@ -1,76 +1,101 @@
-use tauri::{AboutMetadata, CustomMenuItem, Menu, MenuItem, Submenu};
-pub fn os_default(#[allow(unused)] app_name: &str) -> Menu {
-    let mut menu = Menu::new();
-    let settings = CustomMenuItem::new("settings", "Settings").accelerator("CmdOrCtrl+,");
-    #[cfg(target_os = "macos")]
-    {
-        menu = menu.add_submenu(Submenu::new(
-            app_name,
-            Menu::new()
-                .add_native_item(MenuItem::About(
-                    app_name.to_string(),
-                    AboutMetadata::default(),
-                ))
-                .add_native_item(MenuItem::Separator)
-                .add_item(settings)
-                .add_native_item(MenuItem::Separator)
-                .add_native_item(MenuItem::Services)
-                .add_native_item(MenuItem::Separator)
-                .add_native_item(MenuItem::Hide)
-                .add_native_item(MenuItem::HideOthers)
-                .add_native_item(MenuItem::ShowAll)
-                .add_native_item(MenuItem::Separator)
-                .add_native_item(MenuItem::Quit),
-        ));
-    }
+use tauri::menu::{AboutMetadata, Menu, MenuItem, PredefinedMenuItem, Submenu};
+use tauri::{AppHandle, Runtime};
 
-    let mut file_menu = Menu::new();
-    file_menu = file_menu.add_native_item(MenuItem::CloseWindow);
-    #[cfg(not(target_os = "macos"))]
-    {
-        file_menu = file_menu.add_item(settings).add_native_item(MenuItem::Quit);
-    }
-    menu = menu.add_submenu(Submenu::new("File", file_menu));
+pub fn os_default<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
+    let pkg_info = app.package_info();
+    let config = app.config();
+    let about_metadata = AboutMetadata {
+        name: Some(pkg_info.name.clone()),
+        version: Some(pkg_info.version.to_string()),
+        copyright: config.bundle.copyright.clone(),
+        authors: config.bundle.publisher.clone().map(|p| vec![p]),
+        ..Default::default()
+    };
 
-    #[cfg(not(target_os = "linux"))]
-    let mut edit_menu = Menu::new();
-    #[cfg(target_os = "macos")]
-    {
-        edit_menu = edit_menu.add_native_item(MenuItem::Undo);
-        edit_menu = edit_menu.add_native_item(MenuItem::Redo);
-        edit_menu = edit_menu.add_native_item(MenuItem::Separator);
-    }
-    #[cfg(not(target_os = "linux"))]
-    {
-        edit_menu = edit_menu.add_native_item(MenuItem::Cut);
-        edit_menu = edit_menu.add_native_item(MenuItem::Copy);
-        edit_menu = edit_menu.add_native_item(MenuItem::Paste);
-    }
-    #[cfg(target_os = "macos")]
-    {
-        edit_menu = edit_menu.add_native_item(MenuItem::SelectAll);
-    }
-    #[cfg(not(target_os = "linux"))]
-    {
-        menu = menu.add_submenu(Submenu::new("Edit", edit_menu));
-    }
-    #[cfg(target_os = "macos")]
-    {
-        menu = menu.add_submenu(Submenu::new(
-            "View",
-            Menu::new().add_native_item(MenuItem::EnterFullScreen),
-        ));
-    }
+    #[allow(unused_variables)]
+    let settings = MenuItem::with_id(app, "settings", "Settings", true, Some("CmdOrCtrl+,"))?;
 
-    let mut window_menu = Menu::new();
-    window_menu = window_menu.add_native_item(MenuItem::Minimize);
-    #[cfg(target_os = "macos")]
-    {
-        window_menu = window_menu.add_native_item(MenuItem::Zoom);
-        window_menu = window_menu.add_native_item(MenuItem::Separator);
-    }
-    window_menu = window_menu.add_native_item(MenuItem::CloseWindow);
-    menu = menu.add_submenu(Submenu::new("Window", window_menu));
+    let menu = Menu::with_items(
+        app,
+        &[
+            #[cfg(target_os = "macos")]
+            &Submenu::with_items(
+                app,
+                pkg_info.name.clone(),
+                true,
+                &[
+                    &PredefinedMenuItem::about(app, None, Some(about_metadata.clone()))?,
+                    &PredefinedMenuItem::separator(app)?,
+                    &settings,
+                    &PredefinedMenuItem::separator(app)?,
+                    &PredefinedMenuItem::services(app, None)?,
+                    &PredefinedMenuItem::separator(app)?,
+                    &PredefinedMenuItem::hide(app, None)?,
+                    &PredefinedMenuItem::hide_others(app, None)?,
+                    &PredefinedMenuItem::show_all(app, None)?,
+                    &PredefinedMenuItem::separator(app)?,
+                    &PredefinedMenuItem::quit(app, None)?,
+                ],
+            )?,
+            #[cfg(not(any(
+                target_os = "linux",
+                target_os = "dragonfly",
+                target_os = "freebsd",
+                target_os = "netbsd",
+                target_os = "openbsd"
+            )))]
+            &Submenu::with_items(
+                app,
+                "File",
+                true,
+                &[
+                    &PredefinedMenuItem::close_window(app, None)?,
+                    #[cfg(not(target_os = "macos"))]
+                    &settings,
+                    #[cfg(not(target_os = "macos"))]
+                    &PredefinedMenuItem::quit(app, None)?,
+                ],
+            )?,
+            #[cfg(not(target_os = "linux"))]
+            &Submenu::with_items(
+                app,
+                "Edit",
+                true,
+                &[
+                    #[cfg(target_os = "macos")]
+                    &PredefinedMenuItem::undo(app, None)?,
+                    #[cfg(target_os = "macos")]
+                    &PredefinedMenuItem::redo(app, None)?,
+                    #[cfg(target_os = "macos")]
+                    &PredefinedMenuItem::separator(app)?,
+                    &PredefinedMenuItem::cut(app, None)?,
+                    &PredefinedMenuItem::copy(app, None)?,
+                    &PredefinedMenuItem::paste(app, None)?,
+                    #[cfg(target_os = "macos")]
+                    &PredefinedMenuItem::select_all(app, None)?,
+                ],
+            )?,
+            #[cfg(target_os = "macos")]
+            &Submenu::with_items(
+                app,
+                "View",
+                true,
+                &[&PredefinedMenuItem::fullscreen(app, None)?],
+            )?,
+            &Submenu::with_items(
+                app,
+                "Window",
+                true,
+                &[
+                    &PredefinedMenuItem::minimize(app, None)?,
+                    &PredefinedMenuItem::maximize(app, None)?,
+                    #[cfg(target_os = "macos")]
+                    &PredefinedMenuItem::separator(app)?,
+                    &PredefinedMenuItem::close_window(app, None)?,
+                ],
+            )?,
+        ],
+    )?;
 
-    menu
+    Ok(menu)
 }

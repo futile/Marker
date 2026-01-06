@@ -1,94 +1,52 @@
 {
-  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Marker",
+  "version": "1.4.1",
+  "identifier": "com.marker.app",
   "build": {
     "beforeBuildCommand": "pnpm build",
     "beforeDevCommand": "pnpm dev",
-    "devPath": "http://localhost:3000",
-    "distDir": "../dist"
+    "devUrl": "http://localhost:6275",
+    "frontendDist": "../dist"
   },
-  "package": {
-    "productName": "Marker",
-    "version": "1.4.1"
-  },
-  "tauri": {
-    "allowlist": {
-      "all": false,
-      "shell": {
-        "open": "^(?:mailto:|https://|tel:).*\\?open=true$",
-        "execute": true,
-        "scope": [
-          {
-            "name": "git",
-            "cmd": "git",
-            "args": true
-          }
-        ]
-      },
-      "protocol": {
-        "asset": true,
-        "assetScope": ["$HOME/**/*"]
-      },
-      "dialog": {
-        "all": true
-      },
-      "path": {
-        "all": true
-      },
-      "fs": {
-        "all": true,
+  "app": {
+    "security": {
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
         "scope": ["$HOME/**/*", "$APPDATA/**/*"]
       },
-      "window": {
-        "all": false,
-        "maximize": true,
-        "unmaximize": true,
-        "startDragging": true,
-        "create": true
-      }
-    },
-    "bundle": {
-      "active": true,
-      "category": "DeveloperTool",
-      "copyright": "",
-      "deb": {
-        "depends": []
-      },
-      "externalBin": [],
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ],
-      "identifier": "com.marker.app",
-      "longDescription": "",
-      "macOS": {
-        "entitlements": null,
-        "exceptionDomain": "",
-        "frameworks": [],
-        "providerShortName": null,
-        "signingIdentity": null
-      },
-      "resources": ["assets/"],
-      "shortDescription": "",
-      "targets": "all",
-      "windows": {
-        "certificateThumbprint": null,
-        "digestAlgorithm": "sha256",
-        "timestampUrl": ""
-      }
-    },
-    "security": {
-      "csp": null
-    },
-    "updater": {
-      "active": true,
-      "endpoints": [
-        "https://github.com/tk04/Marker/releases/download/master/latest.json"
-      ],
-      "dialog": true,
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc3MTU3NzVGQ0U5NzQyMDEKUldRQlFwZk9YM2NWZHg1TUZLVlI1Z3VMOStTY1lSeENJb2R1cnpnQjgzZk5TS0c3SFFha2VPWVoK"
+      "capabilities": [
+        {
+          "identifier": "main",
+          "description": "Main window access to filesystem, dialogs, shell, and store.",
+          "windows": ["main"],
+          "permissions": [
+            "core:default",
+            "core:path:allow-join",
+            "core:path:allow-resolve",
+            "core:path:allow-resolve-directory",
+            "core:menu:default",
+            "core:event:default",
+            "core:window:allow-create",
+            "core:window:allow-maximize",
+            "core:window:allow-unmaximize",
+            "core:window:allow-start-dragging",
+            "get-file-metadata",
+            "fs:read-all",
+            "fs:write-all",
+            {
+              "identifier": "fs:scope",
+              "allow": ["$HOME/**/*", "$APPDATA/**/*"]
+            },
+            "dialog:default",
+            "shell:allow-open",
+            "shell:allow-execute",
+            "store:default",
+            "updater:default"
+          ]
+        }
+      ]
     },
     "windows": [
       {
@@ -102,8 +60,55 @@
         "width": 800,
         "minWidth": 800,
         "minHeight": 400,
-        "fileDropEnabled": false
+        "dragDropEnabled": false
       }
     ]
+  },
+  "bundle": {
+    "active": true,
+    "category": "DeveloperTool",
+    "copyright": "",
+    "externalBin": [],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "longDescription": "",
+    "linux": {
+      "deb": {
+        "depends": []
+      }
+    },
+    "macOS": {
+      "entitlements": null,
+      "exceptionDomain": "",
+      "frameworks": [],
+      "providerShortName": null,
+      "signingIdentity": null
+    },
+    "resources": ["assets/"],
+    "shortDescription": "",
+    "targets": "all",
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    }
+  },
+  "plugins": {
+    "shell": {
+      "open": "^(?:mailto:|https://|tel:).*\\?open=true$"
+    },
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://github.com/tk04/Marker/releases/download/master/latest.json"
+      ],
+      "dialog": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc3MTU3NzVGQ0U5NzQyMDEKUldRQlFwZk9YM2NWZHg1TUZLVlI1Z3VMOStTY1lSeENJb2R1cnpnQjgzZk5TS0c3SFFha2VPWVoK"
+    }
   }
 }

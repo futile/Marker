@@ -1,7 +1,8 @@
 import { setCurrProject, setSortInfo } from "@/utils/appStore";
-import { FileInfo, getFileMeta } from "@/utils/getFileMeta";
+import { FileInfo, type FileEntry, getFileMeta } from "@/utils/getFileMeta";
 import { Dir, Projects, Settings, SortInfo } from "@/utils/types";
-import { FileEntry, readDir } from "@tauri-apps/api/fs";
+import { readDir } from "@tauri-apps/plugin-fs";
+import { join } from "@tauri-apps/api/path";
 import { create } from "zustand";
 interface AppState {
   currProject?: Dir;
@@ -46,33 +47,45 @@ const useStore = create<AppState>()((set, get) => ({
   fetchDir: async () => {
     const currProject = get().currProject?.dir;
     if (!currProject) return;
-    const entries = await readDir(currProject, {
-      recursive: true,
-    });
-
-    async function processEntries(entries: FileEntry[], arr: FileInfo[]) {
+    async function processEntries(
+      entries: FileEntry[],
+      parentPath: string,
+      arr: FileInfo[],
+    ) {
       for (const entry of entries) {
         if (entry.name?.startsWith(".")) {
           continue;
         }
-        if (entry.children) {
-          let subArr: any[] = [];
-          processEntries(entry.children, subArr);
+
+        const entryPath = await join(parentPath, entry.name);
+
+        if (entry.isDirectory) {
+          const children: FileInfo[] = [];
+          const childEntries = await readDir(entryPath);
+          await processEntries(
+            childEntries as FileEntry[],
+            entryPath,
+            children,
+          );
+          const dirEntry = { ...entry, path: entryPath, children };
           arr.push({
-            ...entry,
-            children: subArr,
-            meta: await getFileMeta(entry),
+            ...dirEntry,
+            meta: await getFileMeta(dirEntry),
           });
-        } else {
-          if (!entry.name?.endsWith(".md")) {
-            continue;
-          }
-          arr.push({ ...entry, meta: await getFileMeta(entry) });
+          continue;
         }
+
+        if (!entry.name?.endsWith(".md")) {
+          continue;
+        }
+
+        const fileEntry = { ...entry, path: entryPath };
+        arr.push({ ...fileEntry, meta: await getFileMeta(fileEntry) });
       }
     }
+    const entries = (await readDir(currProject)) as FileEntry[];
     const files: FileInfo[] = [];
-    await processEntries(entries, files);
+    await processEntries(entries, currProject, files);
     set(() => ({ files }));
   },
   setSettings: (settings) => {

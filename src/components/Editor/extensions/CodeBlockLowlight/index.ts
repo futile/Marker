@@ -1,4 +1,4 @@
-import CodeBlock, { type CodeBlockOptions } from "@tiptap/extension-code-block";
+import { CodeBlock, type CodeBlockOptions } from "@tiptap/extension-code-block";
 import { common, createLowlight } from "lowlight";
 
 import { LowlightPlugin } from "./lowlightPlugin";
@@ -21,8 +21,18 @@ const CodeBlockLowlight = CodeBlock.extend<CodeBlockLowlightOptions>({
     return ReactNodeViewRenderer(CodeBlockView);
   },
   addOptions() {
+    const parent = this.parent?.() ?? {
+      languageClassPrefix: "language-",
+      exitOnTripleEnter: true,
+      exitOnArrowDown: true,
+      defaultLanguage: null,
+      enableTabIndentation: false,
+      tabSize: 4,
+      HTMLAttributes: {},
+    };
     return {
-      ...this.parent?.(),
+      ...parent,
+      lowlight,
       defaultLanguage: null,
     };
   },

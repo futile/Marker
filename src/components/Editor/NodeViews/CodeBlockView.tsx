@@ -1,6 +1,6 @@
 import { NodeViewContent, NodeViewWrapper } from "@tiptap/react";
 import { FaSort } from "react-icons/fa";
-import props from "./types";
+import type props from "./types";
 
 import { common } from "lowlight";
 
@@ -66,7 +66,9 @@ const CodeBlockView: React.FC<props> = ({ node, updateAttributes }) => {
         </Popover>
       </div>
       <pre>
-        <NodeViewContent as={"code"} />
+        <code>
+          <NodeViewContent />
+        </code>
       </pre>
     </NodeViewWrapper>
   );

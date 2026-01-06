@@ -7,19 +7,22 @@ license = ""
 repository = ""
 default-run = "marker"
 edition = "2021"
-rust-version = "1.60"
+rust-version = "1.77.2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "1.5.1", features = [] }
+tauri-build = { version = "2.5.3", features = [] }
 
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "1.6.0", features = [ "window-create", "native-tls-vendored", "updater", "window-unmaximize", "window-maximize", "window-start-dragging", "shell-open", "protocol-asset", "shell-execute", "dialog-all", "fs-all", "path-all"] }
-tauri-plugin-store = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
-tauri-plugin-context-menu = "0.7.1"
+tauri = { version = "2.9.5", features = [ "protocol-asset" ] }
+tauri-plugin-store = "2.4.1"
+tauri-plugin-fs = "2.4.4"
+tauri-plugin-dialog = "2.4.2"
+tauri-plugin-shell = "2.3.3"
+tauri-plugin-updater = "2.9.0"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc = "0.2.7"
@@ -30,3 +33,6 @@ cocoa = "0.25.0"
 # If you use cargo directly instead of tauri's cli you can use this feature flag to switch between tauri's `dev` and `build` modes.
 # DO NOT REMOVE!!
 custom-protocol = [ "tauri/custom-protocol" ]
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(feature, values(\"cargo-clippy\"))"] }

@@ -1,10 +1,5 @@
-import {
-  readDir,
-  type FileEntry,
-  writeTextFile,
-  exists,
-  createDir,
-} from "@tauri-apps/api/fs";
+import { readDir, writeTextFile, exists, mkdir } from "@tauri-apps/plugin-fs";
+import type { FileEntry, FileInfo } from "@/utils/getFileMeta";
 
 import { join } from "@tauri-apps/api/path";
 import {
@@ -21,9 +16,10 @@ import { BsHouse } from "react-icons/bs";
 import { isMacOS } from "@tiptap/core";
 import CommandMenu from "../Settings/CommandMenu";
 import useStore from "@/store/appStore";
-import { FileInfo, getFileMeta } from "@/utils/getFileMeta";
+import { getFileMeta } from "@/utils/getFileMeta";
 import Root from "./FileTree/Root";
 import { Link } from "react-router-dom";
+import { useShallow } from "zustand/react/shallow";
 
 interface props {
   project: Dir;
@@ -36,44 +32,59 @@ const App: React.FC<props> = ({ project }) => {
     setCurrFile,
     setCurrProject,
     setProjects,
-  } = useStore((s) => ({
-    files: s.files,
-    setFiles: s.setFiles,
-    currFile: s.currFile,
-    setCurrFile: s.setCurrFile,
-    setCurrProject: s.setCurrProject,
-    setProjects: s.setProjects,
-  }));
+  } = useStore(
+    useShallow((s) => ({
+      files: s.files,
+      setFiles: s.setFiles,
+      currFile: s.currFile,
+      setCurrFile: s.setCurrFile,
+      setCurrProject: s.setCurrProject,
+      setProjects: s.setProjects,
+    })),
+  );
 
   const [collapse, setCollapse] = useState(false);
   async function getFiles(path: string) {
-    const entries = await readDir(path, {
-      recursive: true,
-    });
-
-    async function processEntries(entries: FileEntry[], arr: FileInfo[]) {
+    async function processEntries(
+      entries: FileEntry[],
+      parentPath: string,
+      arr: FileInfo[],
+    ) {
       for (const entry of entries) {
         if (entry.name?.startsWith(".")) {
           continue;
         }
-        if (entry.children) {
-          let subArr: any[] = [];
-          processEntries(entry.children, subArr);
+
+        const entryPath = await join(parentPath, entry.name);
+
+        if (entry.isDirectory) {
+          const children: FileInfo[] = [];
+          const childEntries = await readDir(entryPath);
+          await processEntries(
+            childEntries as FileEntry[],
+            entryPath,
+            children,
+          );
+          const dirEntry = { ...entry, path: entryPath, children };
           arr.push({
-            ...entry,
-            children: subArr,
-            meta: await getFileMeta(entry),
+            ...dirEntry,
+            meta: await getFileMeta(dirEntry),
           });
-        } else {
-          if (!entry.name?.endsWith(".md")) {
-            continue;
-          }
-          arr.push({ ...entry, meta: await getFileMeta(entry) });
+          continue;
         }
+
+        if (!entry.name?.endsWith(".md")) {
+          continue;
+        }
+
+        const fileEntry = { ...entry, path: entryPath };
+        arr.push({ ...fileEntry, meta: await getFileMeta(fileEntry) });
       }
     }
+
+    const entries = (await readDir(path)) as FileEntry[];
     const files: FileInfo[] = [];
-    await processEntries(entries, files);
+    await processEntries(entries, path, files);
     setFiles(files);
   }
   async function getProject() {
@@ -92,7 +103,7 @@ const App: React.FC<props> = ({ project }) => {
     const newfilePath = await join(path, filename);
     const folder = await join(newfilePath, "../");
     if (!(await exists(folder))) {
-      await createDir(folder, { recursive: true });
+      await mkdir(folder, { recursive: true });
     }
     if (newfilePath.endsWith(".md")) {
       await writeTextFile(newfilePath, "");
@@ -105,13 +116,16 @@ const App: React.FC<props> = ({ project }) => {
       <CommandMenu />
       <div className="group/menu select-none">
         <div
-          className={`${!collapse && "opacity-0 group-hover/menu:opacity-100"
-            } max-w-[210px] w-full px-3 ${(isMacOS() || !collapse) && "pl-20"
-            } pt-[5px] fixed pb-5 z-10 transition-all duration-100`}
+          className={`${
+            !collapse && "opacity-0 group-hover/menu:opacity-100"
+          } max-w-[210px] w-full px-3 ${
+            (isMacOS() || !collapse) && "pl-20"
+          } pt-[5px] fixed pb-5 z-10 transition-all duration-100`}
         >
           <div
-            className={`transition-all duration-50 flex px-2 gap-3 w-full ${collapse ? "ml-0" : "ml-14"
-              } items-center mt-1 pb-2`}
+            className={`transition-all duration-50 flex px-2 gap-3 w-full ${
+              collapse ? "ml-0" : "ml-14"
+            } items-center mt-1 pb-2`}
           >
             <Link
               to="/?home=true"
@@ -120,8 +134,9 @@ const App: React.FC<props> = ({ project }) => {
               <BsHouse />
             </Link>
             <div
-              className={`cursor-pointer h-fit text-neutral-500 ${collapse && "rotate-180"
-                }`}
+              className={`cursor-pointer h-fit text-neutral-500 ${
+                collapse && "rotate-180"
+              }`}
               onClick={() => setCollapse((p) => !p)}
             >
               <MdKeyboardDoubleArrowLeft size={20} />
@@ -129,13 +144,21 @@ const App: React.FC<props> = ({ project }) => {
           </div>
         </div>
         <div
-          className={`transition-all ease-in-out duration-50 max-w-[210px] w-full border-r pt-12 fixed bg-secondary flex flex-col h-screen ${collapse ? "-left-[210px]" : "left-0"
-            }`}
+          className={`transition-all ease-in-out duration-50 max-w-[210px] w-full border-r pt-12 fixed bg-secondary flex flex-col h-screen ${
+            collapse ? "-left-[210px]" : "left-0"
+          }`}
         >
           <div className="overflow-y-auto h-full pr-3 overflow-x-hidden w-full">
             <Root
               addFile={addFileHandler}
-              file={{ name: "root", path: project!.dir, children: files }}
+              file={{
+                name: "root",
+                path: project!.dir,
+                children: files,
+                isDirectory: true,
+                isFile: false,
+                isSymlink: false,
+              }}
             />
           </div>
           <Selector />
@@ -144,6 +167,7 @@ const App: React.FC<props> = ({ project }) => {
       <div className="w-full h-full">
         {currFile && (
           <Editor
+            key={currFile.path ?? currFile.name ?? "editor"}
             file={currFile}
             projectPath={project?.dir || ""}
             collapse={collapse}

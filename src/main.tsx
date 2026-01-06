@@ -9,10 +9,11 @@ import {
 } from "react-router-dom";
 import { getProject, getCurrProject } from "@/utils/appStore";
 import { lazy } from "react";
-import { Toaster } from "./components/ui/toaster.tsx";
+import { Toaster } from "./components/ui/sonner.tsx";
 import restoreState from "./store/restoreState.ts";
 import { ThemeProvider } from "./ThemeProvider.tsx";
 import AppSettings from "./components/Settings/AppSettings.tsx";
+import ErrorBoundary from "./components/ErrorBoundary.tsx";
 const Project = lazy(() => import("./Project.tsx"));
 
 restoreState();
@@ -47,7 +48,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <ThemeProvider>
       <AppSettings />
       <Toaster />
-      <RouterProvider router={router} />
+      <ErrorBoundary>
+        <RouterProvider router={router} />
+      </ErrorBoundary>
     </ThemeProvider>
   </React.StrictMode>,
 );

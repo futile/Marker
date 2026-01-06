@@ -1,6 +1,7 @@
 import yaml from "yaml";
 
-import { writeTextFile, type FileEntry } from "@tauri-apps/api/fs";
+import { writeTextFile } from "@tauri-apps/plugin-fs";
+import type { FileEntry } from "@/utils/getFileMeta";
 import { EditorContent, isMacOS } from "@tiptap/react";
 import Titles from "./Titles";
 import { useEffect, useRef, useState } from "react";
@@ -23,12 +24,14 @@ interface props {
 const Editor: React.FC<props> = ({ projectPath, file, collapse }) => {
   const settings = useStore((s) => s.settings);
   const [metadata, setMetadata] = useState<{ [key: string]: any } | null>(null);
+  const skipMetadataSaveRef = useRef(false);
+  const activeFilePathRef = useRef(file.path);
+  const metadataLoadedRef = useRef(false);
   const editor = useTextEditor({
     content: "",
     onUpdate,
     filePath: file.path,
     projectDir: projectPath,
-    loadFile: loadFile,
   });
 
   const saveFileTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -45,6 +48,9 @@ const Editor: React.FC<props> = ({ projectPath, file, collapse }) => {
 
   async function saveFile() {
     try {
+      if (!metadataLoadedRef.current || metadata == null) {
+        return;
+      }
       let mdContent = "---\n" + yaml.stringify(metadata) + "---\n";
       mdContent += htmlToMarkdown(editor?.getHTML() || "");
       await writeTextFile(file.path, mdContent);
@@ -56,39 +62,62 @@ const Editor: React.FC<props> = ({ projectPath, file, collapse }) => {
   }
   useEffect(() => {
     if (metadata != null) {
+      if (skipMetadataSaveRef.current) {
+        skipMetadataSaveRef.current = false;
+        return;
+      }
       onUpdate();
     }
   }, [metadata]);
 
   async function loadFile(editor: EditorType | null) {
     if (!editor) return;
-    const { metadata, html } = await readMarkdownFile(file.path);
+    const targetPath = file.path;
+    try {
+      const { metadata, html } = await readMarkdownFile(targetPath);
+      if (activeFilePathRef.current !== targetPath) {
+        return;
+      }
 
-    editor.commands.updateMetadata({
-      filePath: file.path,
-    });
-    editor.commands.setContent(html);
-    setMetadata(metadata);
+      editor.commands.updateMetadata({
+        filePath: targetPath,
+      });
+      editor.commands.setContent(html, { emitUpdate: false });
+      metadataLoadedRef.current = true;
+      skipMetadataSaveRef.current = metadata != null;
+      setMetadata(metadata);
 
-    editor.commands.focus("start");
-    document.querySelector(".editor")?.scroll({ top: 0 });
+      if (editor.view && !editor.isDestroyed) {
+        editor.commands.focus("start");
+        document.querySelector(".editor")?.scroll({ top: 0 });
+      }
 
-    // reset history (see https://github.com/ueberdosis/tiptap/issues/491#issuecomment-1261056162)
-    // @ts-ignore
-    if (editor.state.history$) {
+      // reset history (see https://github.com/ueberdosis/tiptap/issues/491#issuecomment-1261056162)
       // @ts-ignore
-      editor.state.history$.prevRanges = null;
-      // @ts-ignore
-      editor.state.history$.done.eventCount = 0;
+      if (editor.state.history$) {
+        // @ts-ignore
+        editor.state.history$.prevRanges = null;
+        // @ts-ignore
+        editor.state.history$.done.eventCount = 0;
+      }
+    } catch (error) {
+      if (activeFilePathRef.current !== targetPath) {
+        return;
+      }
+      editor.commands.setContent("", { emitUpdate: false });
+      skipMetadataSaveRef.current = true;
+      metadataLoadedRef.current = false;
+      setMetadata({});
+      console.error("Failed to load markdown file", error);
     }
   }
   useEffect(() => {
+    activeFilePathRef.current = file.path;
+    metadataLoadedRef.current = false;
+    if (!editor) return;
     clearSaveFileTimeout();
-    let timeout = setTimeout(loadFile.bind(null, editor), 0);
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [file.path]);
+    void loadFile(editor);
+  }, [editor, file.path]);
 
   if (!editor) return;
 
@@ -101,8 +130,9 @@ const Editor: React.FC<props> = ({ projectPath, file, collapse }) => {
         {editor.storage.characterCount.words()} words
       </p>
       <div
-        className={`duration-75 transition-all h-fit pb-2 flex items-center justify-between px-5 z-20 pt-[7px] ${collapse ? (isMacOS() ? "ml-[130px]" : "ml-[55px]") : "ml-[210px]"
-          }`}
+        className={`duration-75 transition-all h-fit pb-2 flex items-center justify-between px-5 z-20 pt-[7px] ${
+          collapse ? (isMacOS() ? "ml-[130px]" : "ml-[55px]") : "ml-[210px]"
+        }`}
       >
         <div className="flex items-center gap-5">
           <div className="flex items-center gap-2 text-neutral-400 text-sm">
@@ -124,8 +154,9 @@ const Editor: React.FC<props> = ({ projectPath, file, collapse }) => {
         </div>
       )}
       <div
-        className={`editor transition-all duration-50 h-full overflow-auto ${!collapse ? "ml-[200px] px-5 lg:px-0 lg:ml-0" : "ml-0"
-          } transition-all duration-75`}
+        className={`editor transition-all duration-50 h-full overflow-auto ${
+          !collapse ? "ml-[200px] px-5 lg:px-0 lg:ml-0" : "ml-0"
+        } transition-all duration-75`}
       >
         <div className={`flex flex-col pt-20 h-full`}>
           <div className="text-editor grow justify-center flex flex-col max-w-[580px] lg:pl-20 xl:pl-0 lg:max-w-[736px] m-auto w-full">

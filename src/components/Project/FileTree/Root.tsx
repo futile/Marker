@@ -18,16 +18,20 @@ import {
 import SortItem from "./SortItem";
 import { SortBy, SortType } from "@/utils/types";
 import useStore from "@/store/appStore";
+import { useShallow } from "zustand/react/shallow";
 
 interface props {
   file: FileInfo;
   addFile: (path: string, filename: string) => Promise<void>;
 }
 const Root: React.FC<props> = ({ file, addFile }) => {
-  const { sortBy, sortType, setSortInfo } = useStore((s) => ({
-    ...s.sortInfo,
-    setSortInfo: s.setSortInfo,
-  }));
+  const { sortBy, sortType, setSortInfo } = useStore(
+    useShallow((s) => ({
+      sortBy: s.sortInfo?.sortBy,
+      sortType: s.sortInfo?.sortType,
+      setSortInfo: s.setSortInfo,
+    })),
+  );
   const filenameRef = useRef<HTMLInputElement>(null);
   const [create, setCreate] = useState(false);
   const [sortedFiles, setSortedFiles] = useState<FileInfo[]>();
@@ -53,7 +57,7 @@ const Root: React.FC<props> = ({ file, addFile }) => {
         if (!a.meta?.updated_at || !b.meta?.updated_at) break;
         res = compare(
           a.meta.updated_at.secs_since_epoch >
-          b.meta.updated_at.secs_since_epoch,
+            b.meta.updated_at.secs_since_epoch,
         );
         break;
       }
@@ -62,7 +66,7 @@ const Root: React.FC<props> = ({ file, addFile }) => {
         if (!a.meta?.created_at || !b.meta?.created_at) break;
         res = compare(
           a.meta.created_at.secs_since_epoch >
-          b.meta.created_at.secs_since_epoch,
+            b.meta.created_at.secs_since_epoch,
         );
         break;
       }

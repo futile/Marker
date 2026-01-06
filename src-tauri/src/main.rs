@@ -3,8 +3,7 @@
 use serde::{Deserialize, Serialize};
 use std::fs::metadata;
 use std::time::SystemTime;
-use tauri::{Manager, Window};
-use tauri_plugin_context_menu;
+use tauri::{Emitter, Manager, WebviewWindow};
 mod menu;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -23,7 +22,7 @@ pub trait WindowExt {
     fn set_transparent_titlebar(&self);
 }
 #[cfg(target_os = "macos")]
-impl WindowExt for Window {
+impl WindowExt for WebviewWindow {
     fn set_transparent_titlebar(&self) {
         use cocoa::appkit::{NSWindow, NSWindowTitleVisibility};
         use objc::{class, msg_send, sel, sel_impl};
@@ -64,20 +63,27 @@ fn get_file_metadata(filepath: String) -> FileMeta {
 }
 
 fn main() {
-    let context = tauri::generate_context!();
     tauri::Builder::default()
+        .menu(|app| menu::os_default(app))
+        .on_menu_event(|app, event| {
+            if event.id() == "settings" {
+                let _ = app.emit("menu://settings", ());
+            }
+        })
         .setup(|app| {
             #[cfg(target_os = "macos")]
             {
-                let win = app.get_window("main").unwrap();
+                let win = app.get_webview_window("main").unwrap();
                 win.set_transparent_titlebar();
             }
             Ok(())
         })
         .plugin(tauri_plugin_store::Builder::default().build())
-        .plugin(tauri_plugin_context_menu::init())
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![get_file_metadata])
-        .menu(menu::os_default(&context.package_info().name))
-        .run(context)
+        .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

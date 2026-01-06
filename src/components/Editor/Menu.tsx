@@ -1,5 +1,5 @@
-import type { Editor } from "@tiptap/react";
-import { BubbleMenu } from "@tiptap/react";
+import type { Editor } from "@tiptap/core";
+import { BubbleMenu } from "@tiptap/react/menus";
 
 import type { ReactElement } from "react";
 import {
@@ -43,7 +43,6 @@ const Menu: React.FC<props> = ({ editor }) => {
       className={`bg-white border p-0 shadow-md rounded-md text-xs`}
       editor={editor}
       updateDelay={0}
-      tippyOptions={{ duration: 100 }}
     >
       <MenuItem
         icon={<AiOutlineBold />}

@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "get-file-metadata"
+description = "Allow reading file metadata for the editor."
+commands.allow = ["get_file_metadata"]

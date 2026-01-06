@@ -9,12 +9,15 @@ import { Link } from "react-router-dom";
 import CreateProject from "../Main/AddProject";
 import { MdAdd } from "react-icons/md";
 import useStore from "@/store/appStore";
+import { useShallow } from "zustand/react/shallow";
 
 const Selector = () => {
-  const { projects, currProject } = useStore((s) => ({
-    projects: s.projects,
-    currProject: s.currProject,
-  }));
+  const { projects, currProject } = useStore(
+    useShallow((s) => ({
+      projects: s.projects,
+      currProject: s.currProject,
+    })),
+  );
   const [open, setOpen] = useState(false);
 
   if (!currProject) return;
@@ -39,8 +42,9 @@ const Selector = () => {
               key={p[0]}
               to={`/project/${p[0]}`}
               onClick={() => setOpen(false)}
-              className={`block border-b border-gray-300 py-4 px-5 last:border-b-0 hover:bg-neutral-200 hover:cursor-pointer ${p[1].dir == currProject.dir && "bg-neutral-200"
-                }`}
+              className={`block border-b border-gray-300 py-4 px-5 last:border-b-0 hover:bg-neutral-200 hover:cursor-pointer ${
+                p[1].dir == currProject.dir && "bg-neutral-200"
+              }`}
             >
               <div className="flex items-center gap-2">
                 <BsFolder2Open className="" />

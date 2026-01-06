@@ -1,24 +1,26 @@
 import useStore from "@/store/appStore";
 import { useState, useRef } from "react";
-import { removeDir } from "@tauri-apps/api/fs";
-import { confirm } from "@tauri-apps/api/dialog";
-import { showMenu } from "tauri-plugin-context-menu";
+import { remove } from "@tauri-apps/plugin-fs";
+import { confirm } from "@tauri-apps/plugin-dialog";
+import { showContextMenu } from "@/utils/contextMenu";
 import File from "./File";
 import { IoIosArrowForward } from "react-icons/io";
 import CreateFile from "../createFile";
 import { FileInfo } from "@/utils/getFileMeta";
 import removePath from "@/utils/removePath";
-import { resolveResource } from "@tauri-apps/api/path";
+import { useShallow } from "zustand/react/shallow";
 
 interface props {
   file: FileInfo;
   addFile: (path: string, filename: string) => Promise<void>;
 }
 const Tree: React.FC<props> = ({ file, addFile }) => {
-  const { setFiles, files } = useStore((s) => ({
-    setFiles: s.setFiles,
-    files: s.files,
-  }));
+  const { setFiles, files } = useStore(
+    useShallow((s) => ({
+      setFiles: s.setFiles,
+      files: s.files,
+    })),
+  );
   const [toggle, setToggle] = useState(false);
   const filenameRef = useRef<HTMLInputElement>(null);
   const [create, setCreate] = useState(false);
@@ -30,7 +32,7 @@ const Tree: React.FC<props> = ({ file, addFile }) => {
   async function deleteFile() {
     const confirmed = await confirm("Are you sure?", `Delete ${file.name}`);
     if (!confirmed) return;
-    await removeDir(file.path, { recursive: true });
+    await remove(file.path, { recursive: true });
     setFiles(removePath(file.path, files));
   }
   return (
@@ -38,21 +40,15 @@ const Tree: React.FC<props> = ({ file, addFile }) => {
       <div
         onContextMenu={async (e) => {
           e.preventDefault();
-          const trash = await resolveResource("assets/trash.svg");
-          showMenu({
-            pos: { x: e.clientX, y: e.clientY },
-            items: [
+          await showContextMenu(
+            [
               {
-                label: "Delete",
-                event: deleteFile,
-                icon: {
-                  path: trash,
-                  width: 12,
-                  height: 12,
-                },
+                text: "Delete",
+                action: deleteFile,
               },
             ],
-          });
+            { x: e.clientX, y: e.clientY },
+          );
         }}
         className="flex justify-between items-center gap-2 cursor-pointer -mx-5 group has-[:not(.addFile:hover)]:hover:bg-accent has-[.addFile:hover]:hover:bg-opacity-0 pr-3"
         key={file.path}
@@ -63,8 +59,9 @@ const Tree: React.FC<props> = ({ file, addFile }) => {
         >
           <IoIosArrowForward
             size={15}
-            className={`${toggle ? "rotate-90" : "rotate-0"
-              } transition-all duration-75 text-primary`}
+            className={`${
+              toggle ? "rotate-90" : "rotate-0"
+            } transition-all duration-75 text-primary`}
           />
           <p className="text-sm select-none">{file.name}</p>
         </div>

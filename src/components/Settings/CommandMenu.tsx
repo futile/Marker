@@ -9,11 +9,12 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import useStore from "@/store/appStore";
-import { FileEntry } from "@tauri-apps/api/fs";
+import type { FileEntry } from "@/utils/getFileMeta";
 import { useState, useEffect, memo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/ThemeProvider";
 import { Moon, Sun, SunMoon } from "lucide-react";
+import { useShallow } from "zustand/react/shallow";
 
 const Files = ({
   files,
@@ -22,10 +23,12 @@ const Files = ({
   files?: FileEntry[];
   close: () => void;
 }) => {
-  const { setCurrFile, projectDir } = useStore((s) => ({
-    setCurrFile: s.setCurrFile,
-    projectDir: s.currProject!.dir,
-  }));
+  const { setCurrFile, projectDir } = useStore(
+    useShallow((s) => ({
+      setCurrFile: s.setCurrFile,
+      projectDir: s.currProject?.dir ?? "",
+    })),
+  );
   return (
     <>
       {files?.map((file) =>
@@ -54,10 +57,12 @@ const CommandMenu: React.FC = () => {
   const navigate = useNavigate();
   const elementRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
-  const { files, projects } = useStore((s) => ({
-    files: s.files,
-    projects: s.projects,
-  }));
+  const { files, projects } = useStore(
+    useShallow((s) => ({
+      files: s.files,
+      projects: s.projects,
+    })),
+  );
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {

@@ -1,11 +1,13 @@
 import useStore from "@/store/appStore";
 
-import { showMenu } from "tauri-plugin-context-menu";
-import { removeFile, renameFile, type FileEntry } from "@tauri-apps/api/fs";
-import { confirm } from "@tauri-apps/api/dialog";
+import { showContextMenu } from "@/utils/contextMenu";
+import { remove, rename as renameFile } from "@tauri-apps/plugin-fs";
+import type { FileEntry } from "@/utils/getFileMeta";
+import { confirm } from "@tauri-apps/plugin-dialog";
 import { useRef, useState } from "react";
-import { join, resolveResource } from "@tauri-apps/api/path";
+import { join } from "@tauri-apps/api/path";
 import removePath from "@/utils/removePath";
+import { useShallow } from "zustand/react/shallow";
 
 interface props {
   file: FileEntry;
@@ -14,13 +16,13 @@ const File: React.FC<props> = ({ file }) => {
   const nameRef = useRef<HTMLInputElement>(null);
   const [showInput, setShowInput] = useState(false);
   const { currFile, fetchDir, setCurrFile, files, setFiles } = useStore(
-    (s) => ({
+    useShallow((s) => ({
       currFile: s.currFile,
       setCurrFile: s.setCurrFile,
       setFiles: s.setFiles,
       files: s.files,
       fetchDir: s.fetchDir,
-    }),
+    })),
   );
 
   async function rename() {
@@ -33,44 +35,39 @@ const File: React.FC<props> = ({ file }) => {
     await fetchDir();
     setShowInput(false);
     if (currFile?.path == file.path) {
-      setCurrFile({ path: newPath, name, children: [] });
+      setCurrFile({
+        path: newPath,
+        name,
+        children: [],
+        isDirectory: false,
+        isFile: true,
+        isSymlink: false,
+      });
     }
   }
   async function deleteFile() {
     const confirmed = await confirm("Are you sure?", `Delete ${file.name}`);
     if (!confirmed) return;
-    await removeFile(file.path);
+    await remove(file.path);
     setFiles(removePath(file.path, files));
   }
   return (
     <div
       onContextMenu={async (e) => {
         e.preventDefault();
-        const pencil = await resolveResource("assets/pencil.svg");
-        const trash = await resolveResource("assets/trash.svg");
-        showMenu({
-          pos: { x: e.clientX, y: e.clientY },
-          items: [
+        await showContextMenu(
+          [
             {
-              label: "Rename",
-              event: () => setShowInput(true),
-              icon: {
-                path: pencil,
-                width: 12,
-                height: 12,
-              },
+              text: "Rename",
+              action: () => setShowInput(true),
             },
             {
-              label: "Delete",
-              event: deleteFile,
-              icon: {
-                path: trash,
-                width: 12,
-                height: 12,
-              },
+              text: "Delete",
+              action: deleteFile,
             },
           ],
-        });
+          { x: e.clientX, y: e.clientY },
+        );
       }}
       className={` flex group items-center justify-between -mx-5 px-5 py-2 ${currFile?.path == file.path && "bg-accent"} cursor-pointer has-[.dots:hover]:bg-opacity-0 hover:bg-accent `}
       onClick={() => setCurrFile(file)}

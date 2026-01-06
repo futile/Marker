@@ -8,6 +8,11 @@ import { v4 as uuidv4 } from "uuid";
 export type TOC = { node: Node; level: number }[];
 
 declare module "@tiptap/core" {
+  interface Storage {
+    tableOfContents: {
+      toc: TOC;
+    };
+  }
   interface Commands<ReturnType> {
     tableOfContents: {
       /**
@@ -26,12 +31,12 @@ const TableOfContents = Extension.create({
         types: ["heading"],
         attributes: {
           id: {
-            isRequired: true,
+            default: null,
             renderHTML(attributes) {
               return { id: attributes.id };
             },
             parseHTML: (element) => {
-              element.getAttribute("id") || uuidv4();
+              return element.getAttribute("id") || null;
             },
           },
         },

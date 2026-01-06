@@ -5,12 +5,15 @@ import Projects from "./Projects";
 import EmptyProject from "./EmptyProject";
 import AddProject from "./AddProject";
 import useStore from "@/store/appStore";
+import { useShallow } from "zustand/react/shallow";
 
 const Apps = () => {
-  const { projects, setProjects } = useStore((s) => ({
-    projects: s.projects,
-    setProjects: s.setProjects,
-  }));
+  const { projects, setProjects } = useStore(
+    useShallow((s) => ({
+      projects: s.projects,
+      setProjects: s.setProjects,
+    })),
+  );
   const [empty, setEmpty] = useState(false);
   useEffect(() => {
     if (projects && Object.keys(projects).length == 0) {

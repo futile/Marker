@@ -2,32 +2,33 @@ import { Renderer, marked } from "marked";
 import { escape } from "../helpers";
 
 const renderer: Partial<Renderer> = {
-  paragraph(text) {
+  paragraph(this: Renderer, { tokens }) {
+    const html = this.parser.parseInline(tokens);
     // don't wrap images in p tags
-    if (text.startsWith("<img")) {
-      return text + "\n";
+    if (html.startsWith("<img")) {
+      return html + "\n";
     }
-    return "<p>" + text + "</p>";
+    return "<p>" + html + "</p>\n";
   },
 
   // same as the marked default code renderer
   // here we just adjust it to not add a trailing new line at the end of code blocks
-  code(code, infostring, escaped) {
-    const lang = (infostring || "").match(/^\S*/)?.[0];
+  code({ text, lang, escaped }) {
+    const language = (lang || "").match(/^\S*/)?.[0];
 
-    code = code.replace(/\n$/, "");
+    text = text.replace(/\n$/, "");
 
-    if (!lang) {
+    if (!language) {
       return (
-        "<pre><code>" + (escaped ? code : escape(code)) + "</code></pre>\n"
+        "<pre><code>" + (escaped ? text : escape(text)) + "</code></pre>\n"
       );
     }
 
     return (
       '<pre><code class="language-' +
-      escape(lang) +
+      escape(language) +
       '">' +
-      (escaped ? code : escape(code)) +
+      (escaped ? text : escape(text)) +
       "</code></pre>\n"
     );
   },

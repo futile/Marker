@@ -1,7 +1,7 @@
 import { NodeViewContent, NodeViewWrapper } from "@tiptap/react";
 
 import { HiPlus } from "react-icons/hi2";
-import props from "./types";
+import type props from "./types";
 
 const TableView: React.FC<props> = ({ editor }) => {
   return (

@@ -1,6 +1,6 @@
-import { Command } from "@tauri-apps/api/shell";
+import { Command } from "@tauri-apps/plugin-shell";
 
-import { readTextFile, writeTextFile } from "@tauri-apps/api/fs";
+import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import markdown from "highlight.js/lib/languages/markdown";
 import "highlight.js/styles/nord.css";
 import hljs from "highlight.js/lib/core";
@@ -19,8 +19,8 @@ import { useEffect, useRef, useState } from "react";
 import { join } from "@tauri-apps/api/path";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { useToast } from "../ui/use-toast";
 import { IoCheckmarkSharp } from "react-icons/io5";
+import { toast } from "sonner";
 
 interface props {
   projectPath: string;
@@ -28,7 +28,6 @@ interface props {
   reRender: () => void;
 }
 const Publish: React.FC<props> = ({ filePath, projectPath, reRender }) => {
-  const { toast } = useToast();
   const mdRef = useRef<HTMLElement>(null);
   const commitMsgRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string>();
@@ -44,7 +43,7 @@ const Publish: React.FC<props> = ({ filePath, projectPath, reRender }) => {
     }
     await writeTextFile(filePath, txtContent);
     const dir = await join(filePath, "../");
-    const addCmd = await new Command(
+    const addCmd = await Command.create(
       "git",
       ["add", filePath.replace(dir + "/", "")],
       {
@@ -56,7 +55,7 @@ const Publish: React.FC<props> = ({ filePath, projectPath, reRender }) => {
       return;
     }
 
-    const commitCmd = await new Command(
+    const commitCmd = await Command.create(
       "git",
       ["commit", "-m", commitMsgRef.current!.value],
       {
@@ -68,7 +67,7 @@ const Publish: React.FC<props> = ({ filePath, projectPath, reRender }) => {
       return;
     }
 
-    const pushCmd = await new Command("git", ["push"], {
+    const pushCmd = await Command.create("git", ["push"], {
       cwd: dir,
     }).execute();
     if (pushCmd.code != 0) {
@@ -78,10 +77,8 @@ const Publish: React.FC<props> = ({ filePath, projectPath, reRender }) => {
     //re-render to show changes in updated markdown content
     reRender();
 
-    toast({
-      title: "Pushed changes successfully",
-      variant: "successfull",
-      action: <IoCheckmarkSharp className="mr-5" />,
+    toast.success("Pushed changes successfully", {
+      icon: <IoCheckmarkSharp className="mr-5" />,
     });
   }
   async function getContent() {
