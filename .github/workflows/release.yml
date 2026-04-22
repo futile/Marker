@@ -114,4 +114,4 @@ jobs:
         with:
           releaseId: ${{ needs.prepare_release.outputs.release_id }}
           tagName: ${{ needs.prepare_release.outputs.tag_name }}
-          uploadUpdaterJson: false
+          includeUpdaterJson: false
