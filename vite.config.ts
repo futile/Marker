@@ -21,8 +21,10 @@ export default defineConfig({
     "TAURI_DEBUG",
   ],
   build: {
-    // Tauri uses Chromium on Windows and WebKit on macOS and Linux
-    target: process.env.TAURI_PLATFORM == "windows" ? "chrome105" : "safari13",
+    // Use Vite's default browser baseline target for less maintenance.
+    // This keeps the build target aligned with current Vite defaults automatically.
+    // Previous explicit target:
+    // target: process.env.TAURI_PLATFORM == "windows" ? "chrome105" : "safari13",
     // don't minify for debug builds
     minify: !process.env.TAURI_DEBUG ? "esbuild" : false,
     // produce sourcemaps for debug builds
