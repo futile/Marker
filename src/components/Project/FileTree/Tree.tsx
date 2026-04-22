@@ -9,12 +9,14 @@ import CreateFile from "../createFile";
 import { FileInfo } from "@/utils/getFileMeta";
 import removePath from "@/utils/removePath";
 import { useShallow } from "zustand/react/shallow";
+import FileTreeLabel from "./FileTreeLabel";
 
 interface props {
   file: FileInfo;
   addFile: (path: string, filename: string) => Promise<void>;
 }
 const Tree: React.FC<props> = ({ file, addFile }) => {
+  const rowRef = useRef<HTMLDivElement>(null);
   const { setFiles, files } = useStore(
     useShallow((s) => ({
       setFiles: s.setFiles,
@@ -24,6 +26,7 @@ const Tree: React.FC<props> = ({ file, addFile }) => {
   const [toggle, setToggle] = useState(false);
   const filenameRef = useRef<HTMLInputElement>(null);
   const [create, setCreate] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   function createHandler() {
     setToggle(true);
     setCreate((p) => !p);
@@ -38,6 +41,8 @@ const Tree: React.FC<props> = ({ file, addFile }) => {
   return (
     <div>
       <div
+        ref={rowRef}
+        data-file-tree-directory-row={file.path ?? file.name ?? ""}
         onContextMenu={async (e) => {
           e.preventDefault();
           await showContextMenu(
@@ -50,11 +55,13 @@ const Tree: React.FC<props> = ({ file, addFile }) => {
             { x: e.clientX, y: e.clientY },
           );
         }}
-        className="flex justify-between items-center gap-2 cursor-pointer -mx-5 group has-[:not(.addFile:hover)]:hover:bg-accent has-[.addFile:hover]:hover:bg-opacity-0 pr-3"
+        className="flex w-full items-center gap-2 cursor-pointer group hover:bg-accent"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         key={file.path}
       >
         <div
-          className="flex gap-2 items-center w-full h-full px-4 py-2"
+          className="flex min-w-0 flex-1 gap-2 items-center h-full px-4 py-2"
           onClick={() => setToggle((p) => !p)}
         >
           <IoIosArrowForward
@@ -63,9 +70,15 @@ const Tree: React.FC<props> = ({ file, addFile }) => {
               toggle ? "rotate-90" : "rotate-0"
             } transition-all duration-75 text-primary`}
           />
-          <p className="whitespace-nowrap text-sm select-none">{file.name}</p>
+          <FileTreeLabel
+            label={file.name ?? ""}
+            hovered={isHovered}
+            rowRef={rowRef}
+          />
         </div>
-        <CreateFile onClick={createHandler} />
+        <div className="shrink-0 px-2 py-2">
+          <CreateFile onClick={createHandler} />
+        </div>
       </div>
 
       {toggle && (

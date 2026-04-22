@@ -182,8 +182,11 @@ const Root: React.FC<props> = ({ file, addFile }) => {
           />
         </form>
       )}
-      <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto">
-        <div className="inline-block min-w-full pl-5">
+      <div
+        data-file-tree-scroller
+        className="min-h-0 flex-1 overflow-x-auto overflow-y-auto"
+      >
+        <div data-file-tree-content className="w-max min-w-full">
           {sortedFiles?.map((file) =>
             file.children ? (
               <Tree addFile={addFile} file={file} key={file.path} />

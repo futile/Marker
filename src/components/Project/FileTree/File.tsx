@@ -8,13 +8,16 @@ import { useRef, useState } from "react";
 import { join } from "@tauri-apps/api/path";
 import removePath from "@/utils/removePath";
 import { useShallow } from "zustand/react/shallow";
+import FileTreeLabel from "./FileTreeLabel";
 
 interface props {
   file: FileEntry;
 }
 const File: React.FC<props> = ({ file }) => {
   const nameRef = useRef<HTMLInputElement>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
   const [showInput, setShowInput] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const { currFile, fetchDir, setCurrFile, files, setFiles } = useStore(
     useShallow((s) => ({
       currFile: s.currFile,
@@ -53,6 +56,7 @@ const File: React.FC<props> = ({ file }) => {
   }
   return (
     <div
+      ref={rowRef}
       onContextMenu={async (e) => {
         e.preventDefault();
         await showContextMenu(
@@ -69,7 +73,9 @@ const File: React.FC<props> = ({ file }) => {
           { x: e.clientX, y: e.clientY },
         );
       }}
-      className={` flex group items-center justify-between -mx-5 px-5 py-2 ${currFile?.path == file.path && "bg-accent"} cursor-pointer has-[.dots:hover]:bg-opacity-0 hover:bg-accent `}
+      className={`flex w-full items-center justify-between px-5 py-2 ${currFile?.path == file.path && "bg-accent"} cursor-pointer has-[.dots:hover]:bg-opacity-0 hover:bg-accent`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       onClick={() => setCurrFile(file)}
       key={file.path}
     >
@@ -89,9 +95,11 @@ const File: React.FC<props> = ({ file }) => {
           />
         </form>
       ) : (
-        <p className="block w-full whitespace-nowrap text-sm select-none">
-          {file.name}
-        </p>
+        <FileTreeLabel
+          label={file.name ?? ""}
+          hovered={isHovered}
+          rowRef={rowRef}
+        />
       )}
     </div>
   );

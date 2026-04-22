@@ -141,7 +141,7 @@ const App: React.FC<props> = ({ project }) => {
           <div
             className={`transition-all ease-in-out duration-50 flex min-h-0 flex-1 flex-col overflow-hidden`}
           >
-            <div className="min-h-0 flex-1 overflow-hidden pr-3">
+            <div className="min-h-0 flex-1 overflow-hidden pr-0">
               <Root
                 addFile={addFileHandler}
                 file={{
