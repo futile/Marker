@@ -14,13 +14,18 @@
       "csp": null,
       "assetProtocol": {
         "enable": true,
-        "scope": ["$HOME/**/*", "$APPDATA/**/*"]
+        "scope": [
+          "$HOME/**/*",
+          "$APPDATA/**/*"
+        ]
       },
       "capabilities": [
         {
           "identifier": "main",
           "description": "Main window access to filesystem, dialogs, shell, and store.",
-          "windows": ["main"],
+          "windows": [
+            "main"
+          ],
           "permissions": [
             "core:default",
             "core:path:allow-join",
@@ -38,7 +43,10 @@
             "fs:write-all",
             {
               "identifier": "fs:scope",
-              "allow": ["$HOME/**/*", "$APPDATA/**/*"]
+              "allow": [
+                "$HOME/**/*",
+                "$APPDATA/**/*"
+              ]
             },
             "dialog:default",
             "shell:allow-open",
@@ -90,7 +98,9 @@
       "providerShortName": null,
       "signingIdentity": null
     },
-    "resources": ["assets/"],
+    "resources": [
+      "assets/"
+    ],
     "shortDescription": "",
     "targets": "all",
     "windows": {

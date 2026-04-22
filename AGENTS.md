@@ -12,6 +12,7 @@
 - Frontend only: `pnpm dev`
 - Full app (Tauri shell): `pnpm tauri dev`
 - File-tree frontend derivation test: `pnpm test:file-tree`
+- Release version bump test: `pnpm test:bump-version`
 - Release build: `pnpm tauri build`
 
 ## Repo layout
@@ -82,6 +83,11 @@
 - The file-tree frontend test relies on Node's built-in test runner with `--experimental-strip-types`, so run it through `pnpm test:file-tree` instead of plain `node --test`.
 - `Publish` runs `git` in the project directory; make sure a repo exists.
 - Tailwind config lives in `src/styles/globals.css` via `@theme`; `components.json` keeps an empty `tailwind.config` for shadcn.
+- Release version is duplicated in `package.json`, `src-tauri/Cargo.toml`, and `src-tauri/tauri.conf.json`; use `pnpm bump:version <x.y.z>` to keep them aligned.
+- The GitHub `Release` workflow is manual-only and derives the release tag as `vX.Y.Z` from those three version files after verifying they match.
+- The workflow uses a non-matrix prepare job to fail if the tag already exists and to create the draft release once with GitHub-generated release notes.
+- The matrix build jobs then upload platform binaries into that existing draft release, which avoids races around tag and release creation.
+- Fork release automation is currently for downloadable binaries only. The Tauri updater is still configured against upstream and should not be treated as fork-owned auto-update infrastructure. The workflow therefore does not use Tauri updater signing secrets for now.
 
 ## Updating dependencies
 - This is Tauri v2; use `@tauri-apps/plugin-*` + `tauri-plugin-*` versions together.

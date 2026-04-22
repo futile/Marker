@@ -3,10 +3,12 @@
   "type": "module",
   "version": "1.4.1",
   "scripts": {
+    "bump:version": "node scripts/bump-release-version.mjs",
     "dev": "vite --port 6275",
     "build": "tsc && vite build",
     "test:file-tree": "node --experimental-strip-types --test src/utils/fileTree.derive.test.ts",
     "test:file-tree-sort": "node --experimental-transform-types --test src/utils/fileTreeSort.test.ts",
+    "test:bump-version": "node --test scripts/bump-release-version.test.mjs",
     "tauri": "tauri"
   },
   "dependencies": {
