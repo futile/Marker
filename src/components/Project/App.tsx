@@ -7,7 +7,7 @@ import {
   getProjects,
 } from "@/utils/appStore";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Editor from "../Editor/Editor";
 import { MdKeyboardDoubleArrowLeft } from "react-icons/md";
 import { Dir } from "@/utils/types";
@@ -19,7 +19,12 @@ import { getFileMeta } from "@/utils/getFileMeta";
 import Root from "./FileTree/Root";
 import { Link } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
-import { Group, Panel, Separator } from "react-resizable-panels";
+import {
+  Group,
+  Panel,
+  Separator,
+  type PanelImperativeHandle,
+} from "react-resizable-panels";
 
 interface props {
   project: Dir;
@@ -44,6 +49,7 @@ const App: React.FC<props> = ({ project }) => {
   );
 
   const [collapse, setCollapse] = useState(false);
+  const sidebarPanelRef = useRef<PanelImperativeHandle | null>(null);
   async function getFiles(path: string) {
     async function processEntries(
       entries: FileEntry[],
@@ -110,18 +116,38 @@ const App: React.FC<props> = ({ project }) => {
     }
     await getFiles(project!.dir);
   }
+
+  function toggleSidebar() {
+    const panel = sidebarPanelRef.current;
+
+    if (!panel) return;
+
+    if (collapse) {
+      panel.expand();
+      return;
+    }
+
+    panel.collapse();
+  }
   if (!project) return;
   return (
     <div className="flex h-screen w-full">
       <CommandMenu />
       <Group>
         <Panel
-          className={`select-none bg-secondary border-r pt-2 ${collapse && "opacity:50"} flex h-full min-h-0 flex-col overflow-hidden`}
+          panelRef={sidebarPanelRef}
+          collapsible
+          collapsedSize={56}
+          minSize={56}
+          onResize={(size) => setCollapse(size.inPixels <= 60)}
+          className={`select-none bg-secondary border-r pt-8 ${collapse && "opacity:50"} flex h-full min-h-0 flex-col overflow-hidden`}
           defaultSize="20%"
         >
           <div
             className={`transition-all duration-50 flex px-2 gap-3
-               ml-14 items-center justify-end-safe py-1 shrink-0`}
+               relative z-10 items-center py-1 shrink-0 ${
+                 collapse ? "justify-center gap-2 px-0" : "ml-14 justify-end-safe"
+               }`}
           >
             <Link
               to="/?home=true"
@@ -133,31 +159,31 @@ const App: React.FC<props> = ({ project }) => {
               className={`cursor-pointer h-fit text-neutral-500 ${
                 collapse && "rotate-180"
               }`}
-              onClick={() => setCollapse((p) => !p)}
+              onClick={toggleSidebar}
             >
               <MdKeyboardDoubleArrowLeft size={20} />
             </div>
           </div>
-          <div
-            className={`transition-all ease-in-out duration-50 flex min-h-0 flex-1 flex-col overflow-hidden`}
-          >
-            <div className="min-h-0 flex-1 overflow-hidden pr-0">
-              <Root
-                addFile={addFileHandler}
-                file={{
-                  name: "root",
-                  path: project!.dir,
-                  children: files,
-                  isDirectory: true,
-                  isFile: false,
-                  isSymlink: false,
-                }}
-              />
+          {!collapse && (
+            <div className="transition-all ease-in-out duration-50 flex min-h-0 flex-1 flex-col overflow-hidden">
+              <div className="min-h-0 flex-1 overflow-hidden pr-0">
+                <Root
+                  addFile={addFileHandler}
+                  file={{
+                    name: "root",
+                    path: project!.dir,
+                    children: files,
+                    isDirectory: true,
+                    isFile: false,
+                    isSymlink: false,
+                  }}
+                />
+              </div>
+              <div className="shrink-0">
+                <Selector />
+              </div>
             </div>
-            <div className="shrink-0">
-              <Selector />
-            </div>
-          </div>
+          )}
         </Panel>
         <Separator />
         <Panel>
