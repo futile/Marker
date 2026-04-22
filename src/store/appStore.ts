@@ -1,16 +1,20 @@
 import { setCurrProject, setSortInfo } from "@/utils/appStore";
-import { type FileNode, scanMarkdownFileTree } from "@/utils/fileTree";
+import {
+  type FileNode,
+  type MarkdownFileNode,
+  scanMarkdownFileTree,
+} from "@/utils/fileTree";
 import { Dir, Projects, Settings, SortInfo } from "@/utils/types";
 import { create } from "zustand";
 interface AppState {
   currProject?: Dir;
   projects: Projects;
   files: FileNode[];
-  currFile?: FileNode;
+  currFile?: MarkdownFileNode;
   sortInfo?: SortInfo;
   settings: Settings;
 
-  setCurrFile: (name?: FileNode) => void;
+  setCurrFile: (name?: MarkdownFileNode) => void;
   setProjects: (projects: Projects) => void;
   setCurrProject: (project: Dir) => void;
   setFiles: (files: FileNode[]) => void;

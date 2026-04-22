@@ -6,13 +6,13 @@ import { showContextMenu } from "@/utils/contextMenu";
 import File from "./File";
 import { IoIosArrowForward } from "react-icons/io";
 import CreateFile from "../createFile";
-import { FileNode } from "@/utils/fileTree";
+import { DirectoryNode } from "@/utils/fileTree";
 import removePath from "@/utils/removePath";
 import { useShallow } from "zustand/react/shallow";
 import FileTreeLabel from "./FileTreeLabel";
 
 interface props {
-  file: FileNode;
+  file: DirectoryNode;
   addFile: (path: string, filename: string) => Promise<void>;
 }
 const Tree: React.FC<props> = ({ file, addFile }) => {
@@ -74,6 +74,7 @@ const Tree: React.FC<props> = ({ file, addFile }) => {
             label={file.name ?? ""}
             hovered={isHovered}
             rowRef={rowRef}
+            muted={file.containsNoMarkdownFiles}
           />
         </div>
         <div className="shrink-0 px-2 py-2">

@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite --port 6275",
     "build": "tsc && vite build",
+    "test:file-tree": "node --experimental-strip-types --test src/utils/fileTree.derive.test.ts",
     "tauri": "tauri"
   },
   "dependencies": {

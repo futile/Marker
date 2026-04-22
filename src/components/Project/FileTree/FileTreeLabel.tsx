@@ -5,9 +5,15 @@ interface Props {
   label: string;
   hovered: boolean;
   rowRef: RefObject<HTMLElement | null>;
+  muted?: boolean;
 }
 
-const FileTreeLabel: React.FC<Props> = ({ label, hovered, rowRef }) => {
+const FileTreeLabel: React.FC<Props> = ({
+  label,
+  hovered,
+  rowRef,
+  muted = false,
+}) => {
   const labelRef = useRef<HTMLParagraphElement>(null);
   const [overlayRect, setOverlayRect] = useState<DOMRect | null>(null);
   const [rowRect, setRowRect] = useState<DOMRect | null>(null);
@@ -56,13 +62,17 @@ const FileTreeLabel: React.FC<Props> = ({ label, hovered, rowRef }) => {
     <div className="min-w-0 flex-1">
       <p
         ref={labelRef}
-        className="block w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm select-none"
+        className={`block w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm select-none ${
+          muted ? "text-neutral-400" : ""
+        }`}
       >
         {label}
       </p>
       {showOverlay && (
         <div
-          className="pointer-events-none fixed z-50 whitespace-nowrap bg-accent px-1 text-sm text-primary"
+          className={`pointer-events-none fixed z-50 whitespace-nowrap bg-accent px-1 text-sm ${
+            muted ? "text-neutral-400" : "text-primary"
+          }`}
           style={{
             left: overlayRect.left - 4,
             top: rowRect.top,

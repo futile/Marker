@@ -11,6 +11,7 @@
 - Install JS deps: `pnpm install`
 - Frontend only: `pnpm dev`
 - Full app (Tauri shell): `pnpm tauri dev`
+- File-tree frontend derivation test: `pnpm test:file-tree`
 - Release build: `pnpm tauri build`
 
 ## Repo layout
@@ -32,8 +33,9 @@
   - `projects`, `currProject`, `files`, `currFile`, `sortInfo`, `settings`.
   - `restoreState()` in `src/store/restoreState.ts` hydrates from Tauri store.
 - File tree:
-  - Uses `@tauri-apps/api/fs.readDir` recursively.
-  - Filters hidden entries and non-`.md` files.
+  - Native scan happens in Tauri and returns directories plus markdown files.
+  - Frontend derivation in `src/utils/fileTree.ts` computes directory-only presentation flags such as `containsNoMarkdownFiles`.
+  - The file-tree derivation test lives at `src/utils/fileTree.derive.test.ts` and runs via `pnpm test:file-tree`.
   - File metadata is fetched via a Tauri command (`get_file_metadata`).
 - Editor:
   - `src/components/Editor/Editor.tsx` loads markdown, parses front matter, and writes back.
@@ -77,6 +79,7 @@
 - `createProject` id increment is string-based; it can produce ids like `01`, `011`, etc.
 - Editor always writes YAML front matter; files without it will gain one.
 - File tree is not live-watched; refresh happens on project load or add-file.
+- The file-tree frontend test relies on Node's built-in test runner with `--experimental-strip-types`, so run it through `pnpm test:file-tree` instead of plain `node --test`.
 - `Publish` runs `git` in the project directory; make sure a repo exists.
 - Tailwind config lives in `src/styles/globals.css` via `@theme`; `components.json` keeps an empty `tailwind.config` for shadcn.
 

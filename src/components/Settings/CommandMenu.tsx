@@ -32,7 +32,7 @@ const Files = ({
   return (
     <>
       {files?.map((file) =>
-        file.name?.endsWith(".md") ? (
+        !file.isDirectory ? (
           <CommandItem
             key={file.path}
             onSelect={() => {

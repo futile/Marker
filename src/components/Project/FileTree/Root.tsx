@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { TiSortAlphabetically } from "react-icons/ti";
 import File from "./File";
 import CreateFile from "../createFile";
-import { FileNode } from "@/utils/fileTree";
+import { DirectoryNode, FileNode } from "@/utils/fileTree";
 import Tree from "./Tree";
 import { MdFilterList, MdOutlineEditCalendar } from "react-icons/md";
 import {
@@ -21,7 +21,7 @@ import useStore from "@/store/appStore";
 import { useShallow } from "zustand/react/shallow";
 
 interface props {
-  file: FileNode;
+  file: DirectoryNode;
   addFile: (path: string, filename: string) => Promise<void>;
 }
 const Root: React.FC<props> = ({ file, addFile }) => {

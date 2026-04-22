@@ -2,7 +2,7 @@ import useStore from "@/store/appStore";
 
 import { showContextMenu } from "@/utils/contextMenu";
 import { remove, rename as renameFile } from "@tauri-apps/plugin-fs";
-import type { FileNode } from "@/utils/fileTree";
+import type { MarkdownFileNode } from "@/utils/fileTree";
 import { confirm } from "@tauri-apps/plugin-dialog";
 import { useRef, useState } from "react";
 import { join } from "@tauri-apps/api/path";
@@ -11,7 +11,7 @@ import { useShallow } from "zustand/react/shallow";
 import FileTreeLabel from "./FileTreeLabel";
 
 interface props {
-  file: FileNode;
+  file: MarkdownFileNode;
 }
 const File: React.FC<props> = ({ file }) => {
   const nameRef = useRef<HTMLInputElement>(null);

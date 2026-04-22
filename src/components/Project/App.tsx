@@ -12,7 +12,7 @@ import { Dir } from "@/utils/types";
 import Selector from "./Selector";
 import { BsHouse } from "react-icons/bs";
 import useStore from "@/store/appStore";
-import { scanMarkdownFileTree } from "@/utils/fileTree";
+import { scanMarkdownFileTree, type DirectoryNode } from "@/utils/fileTree";
 import Root from "./FileTree/Root";
 import { Link } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
@@ -100,6 +100,17 @@ const App: React.FC<props> = ({ project }) => {
     panel.collapse();
   }
   if (!project) return;
+  const rootNode: DirectoryNode = {
+    name: "root",
+    path: project.dir,
+    children: files,
+    isDirectory: true,
+    isFile: false,
+    isSymlink: false,
+    containsNoMarkdownFiles: files.every((file) =>
+      file.isDirectory ? file.containsNoMarkdownFiles : false,
+    ),
+  };
   return (
     <div className="flex h-screen w-full">
       <Suspense fallback={null}>
@@ -152,17 +163,7 @@ const App: React.FC<props> = ({ project }) => {
                     </div>
                   </div>
                 ) : (
-                  <Root
-                    addFile={addFileHandler}
-                    file={{
-                      name: "root",
-                      path: project!.dir,
-                      children: files,
-                      isDirectory: true,
-                      isFile: false,
-                      isSymlink: false,
-                    }}
-                  />
+                  <Root addFile={addFileHandler} file={rootNode} />
                 )}
               </div>
               <div className="shrink-0">
