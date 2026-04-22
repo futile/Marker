@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -49,20 +50,26 @@ export function updateCargoTomlVersion(contents, version) {
     throw new Error("Could not find [package] section");
   }
 
-  const nextSectionIndex = contents.slice(packageSectionStart + 10).search(/^\[/m);
+  const nextSectionIndex = contents
+    .slice(packageSectionStart + 10)
+    .search(/^\[/m);
   const packageSectionEnd =
     nextSectionIndex === -1
       ? contents.length
       : packageSectionStart + 10 + nextSectionIndex;
   const packageSection = contents.slice(packageSectionStart, packageSectionEnd);
-  const updatedPackageSection = packageSection.replace(
-    /^version = "[^"]+"$/m,
-    `version = "${version}"`
-  );
+  const currentVersionLine = packageSection.match(/^version = "[^"]+"$/m);
 
-  if (updatedPackageSection === packageSection) {
+  if (currentVersionLine === null) {
     throw new Error("Could not find package version field");
   }
+
+  const newVersionLine = `version = "${version}"`;
+
+  const updatedPackageSection = packageSection.replace(
+    currentVersionLine,
+    newVersionLine,
+  );
 
   return contents.replace(packageSection, updatedPackageSection);
 }
@@ -84,7 +91,9 @@ function readCargoTomlVersion(contents) {
     throw new Error("Could not find [package] section");
   }
 
-  const nextSectionIndex = contents.slice(packageSectionStart + 10).search(/^\[/m);
+  const nextSectionIndex = contents
+    .slice(packageSectionStart + 10)
+    .search(/^\[/m);
   const packageSectionEnd =
     nextSectionIndex === -1
       ? contents.length
@@ -115,7 +124,9 @@ export function getSynchronizedVersion(versionMap) {
   const uniqueVersions = [...new Set(entries.map(([, version]) => version))];
 
   if (uniqueVersions.length !== 1) {
-    const details = entries.map(([file, version]) => `${file}: ${version}`).join(", ");
+    const details = entries
+      .map(([file, version]) => `${file}: ${version}`)
+      .join(", ");
     throw new Error(`Version files are out of sync: ${details}`);
   }
 
@@ -127,7 +138,7 @@ export function readVersions() {
     VERSION_FILES.map((relativePath) => [
       relativePath,
       readVersionFromContents(relativePath, readFile(relativePath)),
-    ])
+    ]),
   );
 }
 
@@ -163,7 +174,7 @@ function main(argv) {
 
   if (!command) {
     throw new Error(
-      "Usage: node scripts/bump-release-version.mjs <version> | --print-tag"
+      "Usage: node scripts/bump-release-version.mjs <version> | --print-tag",
     );
   }
 
@@ -174,6 +185,20 @@ function main(argv) {
 
   bumpVersion(command);
   console.log(`Updated release version to ${command}`);
+
+  console.log(
+    `Running 'pnpm tauri info' to check for compatible tauri versions between Js & Rust...`,
+  );
+
+  const tauriInfoResult = spawnSync("pnpm", ["tauri", "info"], {
+    stdio: "inherit",
+  });
+
+  if (tauriInfoResult.status !== 0) {
+    throw new Error(
+      "`pnpm tauri info` exited with an error, make sure tauri versions in Js & Rust are in-sync.",
+    );
+  }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
