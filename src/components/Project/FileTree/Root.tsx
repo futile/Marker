@@ -81,9 +81,9 @@ const Root: React.FC<props> = ({ file, addFile }) => {
     setSortedFiles([...file.children]);
   }, [sortBy, sortType, file.children]);
   return (
-    <div>
-      <div className="ml-5">
-        <div className="flex group justify-between items-center mt-10 mb-2">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="ml-5 shrink-0">
+        <div className="flex group justify-between items-center mt-4 mb-2">
           <h1 className="text-xl">Files</h1>
           <div className="flex items-center gap-1">
             <CreateFile onClick={createHandler} root={true} />
@@ -160,8 +160,30 @@ const Root: React.FC<props> = ({ file, addFile }) => {
         </div>
         <hr className="-ml-5 -mr-5" />
       </div>
-      <div>
-        <div className="pl-5">
+      {create && (
+        <form
+          className="w-full shrink-0"
+          onBlur={() => setCreate(false)}
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (filenameRef.current?.value) {
+              await addFile(file.path, filenameRef.current!.value);
+              filenameRef.current!.value = "";
+            }
+            setCreate(false);
+          }}
+        >
+          <input
+            autoFocus
+            ref={filenameRef}
+            placeholder="Filename.."
+            className="border px-2 py-1 focus:outline-none text-sm w-full"
+            spellCheck={false}
+          />
+        </form>
+      )}
+      <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto">
+        <div className="inline-block min-w-full pl-5">
           {sortedFiles?.map((file) =>
             file.children ? (
               <Tree addFile={addFile} file={file} key={file.path} />
@@ -170,29 +192,6 @@ const Root: React.FC<props> = ({ file, addFile }) => {
             ),
           )}
         </div>
-
-        {create && (
-          <form
-            className="w-full"
-            onBlur={() => setCreate(false)}
-            onSubmit={async (e) => {
-              e.preventDefault();
-              if (filenameRef.current?.value) {
-                await addFile(file.path, filenameRef.current!.value);
-                filenameRef.current!.value = "";
-              }
-              setCreate(false);
-            }}
-          >
-            <input
-              autoFocus
-              ref={filenameRef}
-              placeholder="Filename.."
-              className="border px-2 py-1 focus:outline-none text-sm w-full"
-              spellCheck={false}
-            />
-          </form>
-        )}
       </div>
     </div>
   );

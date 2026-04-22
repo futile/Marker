@@ -89,7 +89,7 @@ const File: React.FC<props> = ({ file }) => {
           />
         </form>
       ) : (
-        <p className="select-none text-sm block whitespace-nowrap w-full overflow-hidden text-ellipsis">
+        <p className="block w-full whitespace-nowrap text-sm select-none">
           {file.name}
         </p>
       )}

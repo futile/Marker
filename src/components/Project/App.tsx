@@ -13,13 +13,13 @@ import { MdKeyboardDoubleArrowLeft } from "react-icons/md";
 import { Dir } from "@/utils/types";
 import Selector from "./Selector";
 import { BsHouse } from "react-icons/bs";
-import { isMacOS } from "@tiptap/core";
 import CommandMenu from "../Settings/CommandMenu";
 import useStore from "@/store/appStore";
 import { getFileMeta } from "@/utils/getFileMeta";
 import Root from "./FileTree/Root";
 import { Link } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
+import { Group, Panel, Separator } from "react-resizable-panels";
 
 interface props {
   project: Dir;
@@ -112,20 +112,16 @@ const App: React.FC<props> = ({ project }) => {
   }
   if (!project) return;
   return (
-    <div className="flex h-full">
+    <div className="flex h-screen w-full">
       <CommandMenu />
-      <div className="group/menu select-none">
-        <div
-          className={`${
-            !collapse && "opacity-0 group-hover/menu:opacity-100"
-          } max-w-[210px] w-full px-3 ${
-            (isMacOS() || !collapse) && "pl-20"
-          } pt-[5px] fixed pb-5 z-10 transition-all duration-100`}
+      <Group>
+        <Panel
+          className={`select-none bg-secondary border-r pt-2 ${collapse && "opacity:50"} flex h-full min-h-0 flex-col overflow-hidden`}
+          defaultSize="20%"
         >
           <div
-            className={`transition-all duration-50 flex px-2 gap-3 w-full ${
-              collapse ? "ml-0" : "ml-14"
-            } items-center mt-1 pb-2`}
+            className={`transition-all duration-50 flex px-2 gap-3
+               ml-14 items-center justify-end-safe py-1 shrink-0`}
           >
             <Link
               to="/?home=true"
@@ -142,38 +138,41 @@ const App: React.FC<props> = ({ project }) => {
               <MdKeyboardDoubleArrowLeft size={20} />
             </div>
           </div>
-        </div>
-        <div
-          className={`transition-all ease-in-out duration-50 max-w-[210px] w-full border-r pt-12 fixed bg-secondary flex flex-col h-screen ${
-            collapse ? "-left-[210px]" : "left-0"
-          }`}
-        >
-          <div className="overflow-y-auto h-full pr-3 overflow-x-hidden w-full">
-            <Root
-              addFile={addFileHandler}
-              file={{
-                name: "root",
-                path: project!.dir,
-                children: files,
-                isDirectory: true,
-                isFile: false,
-                isSymlink: false,
-              }}
-            />
+          <div
+            className={`transition-all ease-in-out duration-50 flex min-h-0 flex-1 flex-col overflow-hidden`}
+          >
+            <div className="min-h-0 flex-1 overflow-hidden pr-3">
+              <Root
+                addFile={addFileHandler}
+                file={{
+                  name: "root",
+                  path: project!.dir,
+                  children: files,
+                  isDirectory: true,
+                  isFile: false,
+                  isSymlink: false,
+                }}
+              />
+            </div>
+            <div className="shrink-0">
+              <Selector />
+            </div>
           </div>
-          <Selector />
-        </div>
-      </div>
-      <div className="w-full h-full">
-        {currFile && (
-          <Editor
-            key={currFile.path ?? currFile.name ?? "editor"}
-            file={currFile}
-            projectPath={project?.dir || ""}
-            collapse={collapse}
-          />
-        )}
-      </div>
+        </Panel>
+        <Separator />
+        <Panel>
+          <div className="w-full h-full">
+            {currFile && (
+              <Editor
+                key={currFile.path ?? currFile.name ?? "editor"}
+                file={currFile}
+                projectPath={project?.dir || ""}
+                collapse={collapse}
+              />
+            )}
+          </div>
+        </Panel>
+      </Group>
     </div>
   );
 };

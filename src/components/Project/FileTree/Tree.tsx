@@ -63,7 +63,7 @@ const Tree: React.FC<props> = ({ file, addFile }) => {
               toggle ? "rotate-90" : "rotate-0"
             } transition-all duration-75 text-primary`}
           />
-          <p className="text-sm select-none">{file.name}</p>
+          <p className="whitespace-nowrap text-sm select-none">{file.name}</p>
         </div>
         <CreateFile onClick={createHandler} />
       </div>
