@@ -91,6 +91,7 @@ pub fn os_default<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
                     &PredefinedMenuItem::maximize(app, None)?,
                     #[cfg(target_os = "macos")]
                     &PredefinedMenuItem::separator(app)?,
+                    &PredefinedMenuItem::about(app, None, Some(about_metadata.clone()))?,
                     &PredefinedMenuItem::close_window(app, None)?,
                 ],
             )?,
