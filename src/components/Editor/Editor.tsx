@@ -1,7 +1,7 @@
 import yaml from "yaml";
 
 import { writeTextFile } from "@tauri-apps/plugin-fs";
-import type { FileEntry } from "@/utils/getFileMeta";
+import type { FileNode } from "@/utils/fileTree";
 import { EditorContent, isMacOS } from "@tiptap/react";
 import Titles from "./Titles";
 import { useEffect, useRef, useState } from "react";
@@ -17,7 +17,7 @@ import type { Editor as EditorType } from "@tiptap/core";
 
 export type TOC = { node: Node; level: number }[];
 interface props {
-  file: FileEntry;
+  file: FileNode;
   projectPath: string;
   collapse: boolean;
 }

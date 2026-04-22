@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "scan-markdown-file-tree"
+description = "Allow scanning the markdown file tree for a project."
+commands.allow = ["scan_markdown_file_tree"]

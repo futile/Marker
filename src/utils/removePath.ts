@@ -1,6 +1,6 @@
-import { FileInfo } from "./getFileMeta";
+import { FileNode } from "./fileTree";
 
-function removePath(path: string, files: FileInfo[]) {
+function removePath(path: string, files: FileNode[]) {
   return files.filter((f) => {
     if (f.path == path) return false;
     if (f.children) {

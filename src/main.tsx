@@ -14,9 +14,11 @@ import restoreState from "./store/restoreState.ts";
 import { ThemeProvider } from "./ThemeProvider.tsx";
 import AppSettings from "./components/Settings/AppSettings.tsx";
 import ErrorBoundary from "./components/ErrorBoundary.tsx";
+
 const Project = lazy(() => import("./Project.tsx"));
 
 restoreState();
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -43,6 +45,7 @@ const router = createBrowserRouter([
     element: <Project />,
   },
 ]);
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ThemeProvider>

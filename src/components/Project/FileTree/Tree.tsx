@@ -6,13 +6,13 @@ import { showContextMenu } from "@/utils/contextMenu";
 import File from "./File";
 import { IoIosArrowForward } from "react-icons/io";
 import CreateFile from "../createFile";
-import { FileInfo } from "@/utils/getFileMeta";
+import { FileNode } from "@/utils/fileTree";
 import removePath from "@/utils/removePath";
 import { useShallow } from "zustand/react/shallow";
 import FileTreeLabel from "./FileTreeLabel";
 
 interface props {
-  file: FileInfo;
+  file: FileNode;
   addFile: (path: string, filename: string) => Promise<void>;
 }
 const Tree: React.FC<props> = ({ file, addFile }) => {

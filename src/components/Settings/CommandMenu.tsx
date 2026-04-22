@@ -9,7 +9,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import useStore from "@/store/appStore";
-import type { FileEntry } from "@/utils/getFileMeta";
+import type { FileNode } from "@/utils/fileTree";
 import { useState, useEffect, memo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/ThemeProvider";
@@ -20,7 +20,7 @@ const Files = ({
   files,
   close,
 }: {
-  files?: FileEntry[];
+  files?: FileNode[];
   close: () => void;
 }) => {
   const { setCurrFile, projectDir } = useStore(

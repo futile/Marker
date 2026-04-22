@@ -1,5 +1,4 @@
-import { readDir, writeTextFile, exists, mkdir } from "@tauri-apps/plugin-fs";
-import type { FileEntry, FileInfo } from "@/utils/getFileMeta";
+import { writeTextFile, exists, mkdir } from "@tauri-apps/plugin-fs";
 
 import { join } from "@tauri-apps/api/path";
 import {
@@ -7,15 +6,13 @@ import {
   getProjects,
 } from "@/utils/appStore";
 
-import { useEffect, useRef, useState } from "react";
-import Editor from "../Editor/Editor";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { MdKeyboardDoubleArrowLeft } from "react-icons/md";
 import { Dir } from "@/utils/types";
 import Selector from "./Selector";
 import { BsHouse } from "react-icons/bs";
-import CommandMenu from "../Settings/CommandMenu";
 import useStore from "@/store/appStore";
-import { getFileMeta } from "@/utils/getFileMeta";
+import { scanMarkdownFileTree } from "@/utils/fileTree";
 import Root from "./FileTree/Root";
 import { Link } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
@@ -25,6 +22,9 @@ import {
   Separator,
   type PanelImperativeHandle,
 } from "react-resizable-panels";
+
+const Editor = lazy(() => import("../Editor/Editor"));
+const CommandMenu = lazy(() => import("../Settings/CommandMenu"));
 
 interface props {
   project: Dir;
@@ -49,49 +49,19 @@ const App: React.FC<props> = ({ project }) => {
   );
 
   const [collapse, setCollapse] = useState(false);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
   const sidebarPanelRef = useRef<PanelImperativeHandle | null>(null);
   async function getFiles(path: string) {
-    async function processEntries(
-      entries: FileEntry[],
-      parentPath: string,
-      arr: FileInfo[],
-    ) {
-      for (const entry of entries) {
-        if (entry.name?.startsWith(".")) {
-          continue;
-        }
-
-        const entryPath = await join(parentPath, entry.name);
-
-        if (entry.isDirectory) {
-          const children: FileInfo[] = [];
-          const childEntries = await readDir(entryPath);
-          await processEntries(
-            childEntries as FileEntry[],
-            entryPath,
-            children,
-          );
-          const dirEntry = { ...entry, path: entryPath, children };
-          arr.push({
-            ...dirEntry,
-            meta: await getFileMeta(dirEntry),
-          });
-          continue;
-        }
-
-        if (!entry.name?.endsWith(".md")) {
-          continue;
-        }
-
-        const fileEntry = { ...entry, path: entryPath };
-        arr.push({ ...fileEntry, meta: await getFileMeta(fileEntry) });
-      }
+    setIsLoadingFiles(true);
+    try {
+      const files = await scanMarkdownFileTree(path);
+      setFiles(files);
+    } catch (error) {
+      console.error("Failed to scan markdown file tree", error);
+      setFiles([]);
+    } finally {
+      setIsLoadingFiles(false);
     }
-
-    const entries = (await readDir(path)) as FileEntry[];
-    const files: FileInfo[] = [];
-    await processEntries(entries, path, files);
-    setFiles(files);
   }
   async function getProject() {
     await getFiles(project.dir);
@@ -132,7 +102,9 @@ const App: React.FC<props> = ({ project }) => {
   if (!project) return;
   return (
     <div className="flex h-screen w-full">
-      <CommandMenu />
+      <Suspense fallback={null}>
+        <CommandMenu />
+      </Suspense>
       <Group>
         <Panel
           panelRef={sidebarPanelRef}
@@ -167,17 +139,31 @@ const App: React.FC<props> = ({ project }) => {
           {!collapse && (
             <div className="transition-all ease-in-out duration-50 flex min-h-0 flex-1 flex-col overflow-hidden">
               <div className="min-h-0 flex-1 overflow-hidden pr-0">
-                <Root
-                  addFile={addFileHandler}
-                  file={{
-                    name: "root",
-                    path: project!.dir,
-                    children: files,
-                    isDirectory: true,
-                    isFile: false,
-                    isSymlink: false,
-                  }}
-                />
+                {isLoadingFiles ? (
+                  <div className="flex h-full min-h-0 flex-col">
+                    <div className="ml-5 shrink-0">
+                      <div className="mt-4 mb-2">
+                        <h1 className="text-xl">Files</h1>
+                      </div>
+                      <hr className="-ml-5 -mr-5" />
+                    </div>
+                    <div className="px-5 py-4 text-sm text-neutral-500">
+                      Loading files...
+                    </div>
+                  </div>
+                ) : (
+                  <Root
+                    addFile={addFileHandler}
+                    file={{
+                      name: "root",
+                      path: project!.dir,
+                      children: files,
+                      isDirectory: true,
+                      isFile: false,
+                      isSymlink: false,
+                    }}
+                  />
+                )}
               </div>
               <div className="shrink-0">
                 <Selector />
@@ -189,12 +175,20 @@ const App: React.FC<props> = ({ project }) => {
         <Panel>
           <div className="w-full h-full">
             {currFile && (
-              <Editor
-                key={currFile.path ?? currFile.name ?? "editor"}
-                file={currFile}
-                projectPath={project?.dir || ""}
-                collapse={collapse}
-              />
+              <Suspense
+                fallback={
+                  <div className="flex h-full items-center justify-center text-sm text-neutral-500">
+                    Loading editor...
+                  </div>
+                }
+              >
+                <Editor
+                  key={currFile.path ?? currFile.name ?? "editor"}
+                  file={currFile}
+                  projectPath={project?.dir || ""}
+                  collapse={collapse}
+                />
+              </Suspense>
             )}
           </div>
         </Panel>

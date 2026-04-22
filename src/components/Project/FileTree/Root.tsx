@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { TiSortAlphabetically } from "react-icons/ti";
 import File from "./File";
 import CreateFile from "../createFile";
-import { FileInfo } from "@/utils/getFileMeta";
+import { FileNode } from "@/utils/fileTree";
 import Tree from "./Tree";
 import { MdFilterList, MdOutlineEditCalendar } from "react-icons/md";
 import {
@@ -21,7 +21,7 @@ import useStore from "@/store/appStore";
 import { useShallow } from "zustand/react/shallow";
 
 interface props {
-  file: FileInfo;
+  file: FileNode;
   addFile: (path: string, filename: string) => Promise<void>;
 }
 const Root: React.FC<props> = ({ file, addFile }) => {
@@ -34,7 +34,7 @@ const Root: React.FC<props> = ({ file, addFile }) => {
   );
   const filenameRef = useRef<HTMLInputElement>(null);
   const [create, setCreate] = useState(false);
-  const [sortedFiles, setSortedFiles] = useState<FileInfo[]>();
+  const [sortedFiles, setSortedFiles] = useState<FileNode[]>();
 
   function createHandler() {
     setCreate((p) => !p);
@@ -45,7 +45,7 @@ const Root: React.FC<props> = ({ file, addFile }) => {
     }
     return res ? 1 : -1;
   }
-  function sortFn(a: FileInfo, b: FileInfo) {
+  function sortFn(a: FileNode, b: FileNode) {
     let res = 0;
     switch (sortBy) {
       case SortBy.Name: {

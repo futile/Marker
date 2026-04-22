@@ -1,16 +1,11 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-use serde::{Deserialize, Serialize};
-use std::fs::metadata;
-use std::time::SystemTime;
-use tauri::{Emitter, Manager, WebviewWindow};
+use file_tree::{file_metadata, scan_markdown_tree, FileMeta, FileNode};
+use tauri::Emitter;
+#[cfg(target_os = "macos")]
+use tauri::{Manager, WebviewWindow};
+mod file_tree;
 mod menu;
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct FileMeta {
-    pub created_at: Option<SystemTime>,
-    pub updated_at: Option<SystemTime>,
-}
 
 pub enum ToolbarThickness {
     Thick,
@@ -50,16 +45,17 @@ impl WindowExt for WebviewWindow {
 }
 #[tauri::command]
 fn get_file_metadata(filepath: String) -> FileMeta {
-    if let Ok(meta) = metadata(filepath) {
-        return FileMeta {
-            updated_at: meta.modified().ok(),
-            created_at: meta.created().ok(),
-        };
-    }
-    FileMeta {
+    file_metadata(std::path::Path::new(&filepath)).unwrap_or(FileMeta {
         created_at: None,
         updated_at: None,
-    }
+    })
+}
+
+#[tauri::command]
+async fn scan_markdown_file_tree(root: String) -> Result<Vec<FileNode>, String> {
+    tauri::async_runtime::spawn_blocking(move || scan_markdown_tree(std::path::Path::new(&root)))
+        .await
+        .map_err(|err| err.to_string())?
 }
 
 fn main() {
@@ -70,10 +66,10 @@ fn main() {
                 let _ = app.emit("menu://settings", ());
             }
         })
-        .setup(|app| {
+        .setup(|_app| {
             #[cfg(target_os = "macos")]
             {
-                let win = app.get_webview_window("main").unwrap();
+                let win = _app.get_webview_window("main").unwrap();
                 win.set_transparent_titlebar();
             }
             Ok(())
@@ -83,7 +79,10 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![get_file_metadata])
+        .invoke_handler(tauri::generate_handler![
+            get_file_metadata,
+            scan_markdown_file_tree
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

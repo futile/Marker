@@ -33,6 +33,7 @@
             "core:window:allow-unmaximize",
             "core:window:allow-start-dragging",
             "get-file-metadata",
+            "scan-markdown-file-tree",
             "fs:read-all",
             "fs:write-all",
             {
