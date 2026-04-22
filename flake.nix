@@ -11,6 +11,12 @@
 
     # `flake-utils` for easier nix-system handling
     flake-utils.url = "github:numtide/flake-utils";
+
+    # `flake-compat` for compatibility with non-flake Nix
+    flake-compat = {
+      url = "github:NixOS/flake-compat";
+      flake = false;
+    };
   };
 
   outputs =
