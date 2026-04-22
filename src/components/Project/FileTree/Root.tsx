@@ -19,16 +19,18 @@ import SortItem from "./SortItem";
 import { SortBy, SortType } from "@/utils/types";
 import useStore from "@/store/appStore";
 import { useShallow } from "zustand/react/shallow";
+import { sortFileTreeNodes } from "@/utils/fileTreeSort";
 
 interface props {
   file: DirectoryNode;
   addFile: (path: string, filename: string) => Promise<void>;
 }
 const Root: React.FC<props> = ({ file, addFile }) => {
-  const { sortBy, sortType, setSortInfo } = useStore(
+  const { sortBy, sortType, emptyDirectoriesLast, setSortInfo } = useStore(
     useShallow((s) => ({
       sortBy: s.sortInfo?.sortBy,
       sortType: s.sortInfo?.sortType,
+      emptyDirectoriesLast: s.sortInfo?.emptyDirectoriesLast ?? false,
       setSortInfo: s.setSortInfo,
     })),
   );
@@ -39,47 +41,16 @@ const Root: React.FC<props> = ({ file, addFile }) => {
   function createHandler() {
     setCreate((p) => !p);
   }
-  function compare(res: boolean) {
-    if (sortType == SortType.Asc) {
-      return res ? -1 : 1;
-    }
-    return res ? 1 : -1;
-  }
-  function sortFn(a: FileNode, b: FileNode) {
-    let res = 0;
-    switch (sortBy) {
-      case SortBy.Name: {
-        if (!a.name || !b.name) break;
-        res = compare(a.name < b.name);
-        break;
-      }
-      case SortBy.UpdatedAt: {
-        if (!a.meta?.updated_at || !b.meta?.updated_at) break;
-        res = compare(
-          a.meta.updated_at.secs_since_epoch >
-            b.meta.updated_at.secs_since_epoch,
-        );
-        break;
-      }
-
-      case SortBy.CreatedAt: {
-        if (!a.meta?.created_at || !b.meta?.created_at) break;
-        res = compare(
-          a.meta.created_at.secs_since_epoch >
-            b.meta.created_at.secs_since_epoch,
-        );
-        break;
-      }
-    }
-    a.children?.sort(sortFn);
-    b.children?.sort(sortFn);
-    return res;
-  }
   useEffect(() => {
     if (!file.children) return;
-    file.children?.sort(sortFn);
-    setSortedFiles([...file.children]);
-  }, [sortBy, sortType, file.children]);
+    setSortedFiles(
+      sortFileTreeNodes(file.children, {
+        sortBy,
+        sortType,
+        emptyDirectoriesLast,
+      }),
+    );
+  }, [sortBy, sortType, emptyDirectoriesLast, file.children]);
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="ml-5 shrink-0">
@@ -100,7 +71,11 @@ const Root: React.FC<props> = ({ file, addFile }) => {
                 <div className="flex flex-col items-start w-full">
                   <SortItem
                     onClick={() =>
-                      setSortInfo({ sortBy: SortBy.Name, sortType })
+                      setSortInfo({
+                        sortBy: SortBy.Name,
+                        sortType,
+                        emptyDirectoriesLast,
+                      })
                     }
                     active={sortBy == SortBy.Name}
                   >
@@ -110,7 +85,11 @@ const Root: React.FC<props> = ({ file, addFile }) => {
 
                   <SortItem
                     onClick={() =>
-                      setSortInfo({ sortBy: SortBy.CreatedAt, sortType })
+                      setSortInfo({
+                        sortBy: SortBy.CreatedAt,
+                        sortType,
+                        emptyDirectoriesLast,
+                      })
                     }
                     active={sortBy == SortBy.CreatedAt}
                   >
@@ -120,7 +99,11 @@ const Root: React.FC<props> = ({ file, addFile }) => {
 
                   <SortItem
                     onClick={() =>
-                      setSortInfo({ sortBy: SortBy.UpdatedAt, sortType })
+                      setSortInfo({
+                        sortBy: SortBy.UpdatedAt,
+                        sortType,
+                        emptyDirectoriesLast,
+                      })
                     }
                     active={sortBy == SortBy.UpdatedAt}
                   >
@@ -136,7 +119,11 @@ const Root: React.FC<props> = ({ file, addFile }) => {
                 <div className="flex flex-col items-start w-full">
                   <SortItem
                     onClick={() =>
-                      setSortInfo({ sortBy, sortType: SortType.Asc })
+                      setSortInfo({
+                        sortBy,
+                        sortType: SortType.Asc,
+                        emptyDirectoriesLast,
+                      })
                     }
                     active={sortType == SortType.Asc}
                   >
@@ -146,12 +133,31 @@ const Root: React.FC<props> = ({ file, addFile }) => {
 
                   <SortItem
                     onClick={() =>
-                      setSortInfo({ sortBy, sortType: SortType.Desc })
+                      setSortInfo({
+                        sortBy,
+                        sortType: SortType.Desc,
+                        emptyDirectoriesLast,
+                      })
                     }
                     active={sortType == SortType.Desc}
                   >
                     <FaSortAmountUp size={12} />
                     Descending
+                  </SortItem>
+                </div>
+                <hr className="w-full border-neutral-400" />
+                <div className="flex flex-col items-start w-full">
+                  <SortItem
+                    onClick={() =>
+                      setSortInfo({
+                        sortBy,
+                        sortType,
+                        emptyDirectoriesLast: !emptyDirectoriesLast,
+                      })
+                    }
+                    active={emptyDirectoriesLast}
+                  >
+                    Sort non-Markdown Directories Last
                   </SortItem>
                 </div>
               </PopoverContent>

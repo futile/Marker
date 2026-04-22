@@ -84,7 +84,7 @@ pub fn os_default<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
             )?,
             &Submenu::with_items(
                 app,
-                "Window",
+                "Marker",
                 true,
                 &[
                     &PredefinedMenuItem::minimize(app, None)?,

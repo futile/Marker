@@ -6,6 +6,7 @@
     "dev": "vite --port 6275",
     "build": "tsc && vite build",
     "test:file-tree": "node --experimental-strip-types --test src/utils/fileTree.derive.test.ts",
+    "test:file-tree-sort": "node --experimental-transform-types --test src/utils/fileTreeSort.test.ts",
     "tauri": "tauri"
   },
   "dependencies": {
