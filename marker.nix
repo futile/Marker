@@ -21,14 +21,9 @@ rustPlatform.buildRustPackage (finalAttrs: {
   pname = "marker";
   # Using the version from a PR that updated the deps, because otherwise they were too old to really be buildable.
   # PR link: https://github.com/tk04/Marker/pull/41
-  version = "1.4.1-pr41";
+  version = "1.5.0";
 
-  src = fetchFromGitHub {
-    owner = "tk04";
-    repo = "Marker";
-    rev = "26f0849b969f99bf7f0bd9bd3ef18b417d24d382";
-    hash = "sha256-3oqlIfvXPU62riLBHvRhsEZOFk8QRGgLVoTKnjnjDOA=";
-  };
+  src = lib.source.cleanSource ./.;
 
   cargoRoot = "src-tauri";
   buildAndTestSubdir = finalAttrs.cargoRoot;
